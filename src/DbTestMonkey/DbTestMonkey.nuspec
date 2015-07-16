@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>DbTestMonkey</id>
+    <version>$version$</version>
+    <title>DbTestMonkey</title>
+    <authors>Justin Cook</authors>
+    <owners>Justin Cook</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Core database library used for assisting with integrations tests that connect to databases.</description>
+    <language>en-US</language>
+    <tags></tags>
+  </metadata>
+</package>

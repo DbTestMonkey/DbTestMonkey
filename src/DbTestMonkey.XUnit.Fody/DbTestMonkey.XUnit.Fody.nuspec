@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>DbTestMonkey.XUnit.Fody</id>
+    <version>$version$</version>
+    <title>DbTestMonkey.XUnit.Fody</title>
+    <authors>Justin Cook</authors>
+    <owners>Justin Cook</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Fody add-in for weaving database unit testing code.</description>
+    <language>en-US</language>
+    <tags></tags>
+	<dependencies>
+		<dependency id="Fody" />
+      <dependency id="DbTestMonkey" />
+      <dependency id="DbTestMonkey.Contracts" />
+	</dependencies>
+  </metadata>
+  <files>
+    <file src="tools\Install.ps1" target="tools\install.ps1" />
+    <file src="tools\Uninstall.ps1" target="tools\uninstall.ps1" />
+    <file src="bin\$configuration$\*.*" target="" />
+  </files>
+</package>
