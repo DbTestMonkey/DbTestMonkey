@@ -28,6 +28,9 @@
       [Connection("TestDatabase2")]
       public SqlConnection TestDb2Connection { get; set; }
 
+      [Connection("TestDatabase1")]
+      public string TestDb1ConnectionString { get; set; }
+
       [Fact]
       public void Connection_properties_should_be_populated()
       {
@@ -95,6 +98,27 @@
 
             // Assert.
             action.ShouldNotThrow();
+         }
+      }
+
+      [Fact]
+      public void Connection_string_properties_should_be_populated()
+      {
+         using (var connection = new SqlConnection(TestDb1ConnectionString))
+         {
+            connection.Open();
+
+            using (var command = connection.CreateCommand())
+            {
+               command.CommandText = "SELECT GetDate()";
+
+               // Act.
+               Action action = () =>
+                  command.ExecuteNonQuery();
+
+               // Assert.
+               action.ShouldNotThrow();
+            }
          }
       }
 

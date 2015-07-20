@@ -59,7 +59,7 @@
          else
          {
             GlobalConfiguration globalConfig =
-               (GlobalConfiguration)ConfigurationManager.GetSection("DbTestMonkey/global");
+               (GlobalConfiguration)ConfigurationManager.GetSection("dbTestMonkey/global");
 
             providerType = globalConfig.DefaultDbProviderType;
          }
@@ -82,7 +82,7 @@
 
          // Set up all the databases defined in the application configuration file.
          ProviderConfigurationBase providerConfig =
-            (ProviderConfigurationBase)ConfigurationManager.GetSection("DbTestMonkey/" + provider.ConfigurationSectionName);
+            (ProviderConfigurationBase)ConfigurationManager.GetSection("dbTestMonkey/" + provider.ConfigurationSectionName);
 
          foreach (var databaseName in providerConfig.Databases
             .Cast<DatabaseConfiguration>()
@@ -143,7 +143,7 @@
          else
          {
             GlobalConfiguration globalConfig =
-               (GlobalConfiguration)ConfigurationManager.GetSection("DbTestMonkey/global");
+               (GlobalConfiguration)ConfigurationManager.GetSection("dbTestMonkey/global");
 
             if (globalConfig == null || globalConfig.DefaultDbProviderType == null)
             {
@@ -175,8 +175,7 @@
             .GetProperties()
             .Where(pi =>
                !activeConnectionProperties.Contains(pi) &&
-               pi.CustomAttributes.Any(a => a.AttributeType.Name == "ConnectionAttribute"))
-            )//.Select(pi => new { Property = pi, Attribute = pi.GetCustomAttribute(typeof(ConnectionAttribute), true) }))
+               pi.CustomAttributes.Any(a => a.AttributeType.Name == "ConnectionAttribute")))
          {
             var connAttribute = connectionProperty.GetCustomAttribute(typeof(ConnectionAttribute), true) as ConnectionAttribute;
 
@@ -195,7 +194,7 @@
          foreach (var prop in methodBase.DeclaringType.GetProperties().Where(p => !activeConnectionProperties.Any(c => c.Name == p.Name)))
          {
             ProviderConfigurationBase providerConfig =
-               (ProviderConfigurationBase)ConfigurationManager.GetSection("DbTestMonkey/" + provider.ConfigurationSectionName);
+               (ProviderConfigurationBase)ConfigurationManager.GetSection("dbTestMonkey/" + provider.ConfigurationSectionName);
 
             var databases = providerConfig.Databases.Cast<DatabaseConfiguration>();
 
@@ -220,6 +219,7 @@
       {
          if (typeof(IDbConnection).IsAssignableFrom(connectionProperty.PropertyType))
          {
+            // Property should be populated with an opened connection instance to the target database.
             IDbConnection newConnection = provider.CreateConnection(database);
             Connections.Add(newConnection);
             connectionProperty.SetValue(sender, newConnection);
@@ -228,11 +228,22 @@
          }
          else if (typeof(Func<IDbConnection>).IsAssignableFrom(connectionProperty.PropertyType))
          {
+            // Property should be populated with a delegate that can provide a connection instance when requested.
             connectionProperty.SetValue(
                sender,
                (Func<IDbConnection>)(() => provider.CreateConnection(database)));
 
             activeConnectionProperties.Add(connectionProperty);
+         }
+         else if (connectionProperty.PropertyType == typeof(string))
+         {
+            // Property should be populated with a connection string that can be used to connect to the target database.
+            using (var connection = provider.CreateConnection(database))
+            {
+               connectionProperty.SetValue(
+                  sender,
+                  connection.ConnectionString);
+            }
          }
          else
          {

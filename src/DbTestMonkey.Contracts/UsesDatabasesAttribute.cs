@@ -28,7 +28,7 @@
       /// </summary>
       public UsesDatabasesAttribute()
       {
-         GlobalConfiguration config = (GlobalConfiguration)ConfigurationManager.GetSection("DbTestMonkey/global");
+         GlobalConfiguration config = (GlobalConfiguration)ConfigurationManager.GetSection("dbTestMonkey/global");
 
          if (config == null || config.DefaultDbProviderType == null)
          {

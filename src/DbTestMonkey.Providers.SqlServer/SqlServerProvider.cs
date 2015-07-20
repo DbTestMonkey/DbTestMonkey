@@ -7,10 +7,20 @@
    using DbTestMonkey.Contracts;
    using DbTestMonkey.Providers.SqlServer;
 
+   /// <summary>
+   /// SqlServer specific database provider for the DbTestMonkey library.
+   /// </summary>
    public class SqlServerProvider : IDatabaseProvider<SqlConnection>
    {
+      /// <summary>
+      /// Gets or sets a logging delegate used to provide diagnostic logging capabilities.
+      /// </summary>
       public Action<string> LogAction { get; set; }
 
+      /// <summary>
+      /// Gets a name that represents the configuration section where config for this provider
+      /// will be found.
+      /// </summary>
       public string ConfigurationSectionName 
       { 
          get
@@ -19,10 +29,14 @@
          }
       }
 
+      /// <summary>
+      /// Reads the associated configuration for the database instance and sets it up if
+      /// it is a localdb instance requiring initialization.
+      /// </summary>
       public void InitialiseDatabaseServer()
       {
-         ProviderConfiguration config = 
-            (ProviderConfiguration)ConfigurationManager.GetSection("DbTestMonkey/" + ConfigurationSectionName);
+         ProviderConfiguration config =
+            (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
 
          if (config.IsLocalDbInstance)
          {
@@ -33,65 +47,120 @@
                throw new InvalidOperationException("LocalDB is not installed on this machine.");
             }
 
-            var localDbProvider = new System.Data.SqlLocalDb.SqlLocalDbProvider();
-
-            string localDbInstanceName = config.LocalDbInstanceName;
-
-            var localDbInstance = localDbProvider.GetOrCreateInstance(localDbInstanceName);
-
-            // TODO: This is questionable logic. Try and source the updated awesome localdb code.
-            if (!localDbInstance.GetInstanceInfo().Exists)
+            if (!string.IsNullOrWhiteSpace(config.LocalDbInstanceName))
             {
-               localDbInstance.Stop();
-               SqlLocalDbInstance.Delete(localDbInstance);
+               LogAction("Preparing localdb instance: " + config.LocalDbInstanceName);
+               var localDbProvider = new System.Data.SqlLocalDb.SqlLocalDbProvider();
 
-               localDbInstance = localDbProvider.GetOrCreateInstance(localDbInstanceName);
+               string localDbInstanceName = config.LocalDbInstanceName;
+               
+               var localDbInstance = localDbProvider.GetOrCreateInstance(localDbInstanceName);
+
+               // TODO: This is questionable logic. Try and source the updated awesome localdb code
+               //       that checks for physical and logical existence of databases.
+               if (!localDbInstance.GetInstanceInfo().Exists)
+               {
+                  LogAction("Localdb instance doesn't yet exist so it will be created.");
+
+                  localDbInstance.Stop();
+                  SqlLocalDbInstance.Delete(localDbInstance);
+
+                  localDbInstance = localDbProvider.GetOrCreateInstance(localDbInstanceName);
+               }
+
+               localDbInstance.Start();
             }
+            else if (!string.IsNullOrWhiteSpace(config.ConnectionString))
+            {
+               LogAction("LocalDb instance name was not provided so we must assume it is already set up.");
 
-            localDbInstance.Start();
+               // SQL Server instance must already be set up.
+               return;
+            }
+            else
+            {
+               throw new InvalidOperationException(
+                  "IsLocalDbInstance was true in configuration but no instance name or connection string was configured.");
+            }
          }
          else
          {
-            throw new NotImplementedException(
-               "Non-localdb functionality is not yet implemented. Stand by for further releases.");
+            // SQL Server instance must already be set up.
+            return;
          }
       }
 
+      /// <summary>
+      /// Sets up a specific database by deploying the schema scripts.
+      /// </summary>
+      /// <param name="databaseName">The name of the database to deploy.</param>
       public void SetupDatabase(string databaseName)
       {
          new DacManager(CreateConnection, LogAction)
             .DeployDacPac(databaseName);
       }
 
+      /// <summary>
+      /// Creates a new open connection to the configured SQLServer instance.
+      /// </summary>
+      /// <returns>A newly opened SqlConnection.</returns>
       public SqlConnection CreateConnection()
       {
          ProviderConfiguration config =
-            (ProviderConfiguration)ConfigurationManager.GetSection("DbTestMonkey/" + ConfigurationSectionName);
+            (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
 
          if (string.IsNullOrWhiteSpace(config.ConnectionString) && !config.IsLocalDbInstance)
          {
-            throw new InvalidOperationException(
-               "Configured connection string was empty or whitespace and database has not been configured as localdb. Connection string is required in this instance.");
+            string errorMessage = 
+               "Configured connection string was empty or whitespace and database has not been configured as localdb. " +
+               "Connection string is required in this instance.";
+            throw new InvalidOperationException(errorMessage);
          }
 
          SqlConnection connection = null;
 
-         if (config.IsLocalDbInstance && string.IsNullOrWhiteSpace(config.ConnectionString))
+         if (config.IsLocalDbInstance)
          {
-            var localDbProvider = new System.Data.SqlLocalDb.SqlLocalDbProvider();
+            if (!string.IsNullOrWhiteSpace(config.ConnectionString))
+            {
+               connection = new SqlConnection(config.ConnectionString);
+            }
+            else if (!string.IsNullOrWhiteSpace(config.LocalDbInstanceName))
+            {
+               var localDbProvider = new System.Data.SqlLocalDb.SqlLocalDbProvider();
 
-            connection = localDbProvider.GetInstance(config.LocalDbInstanceName).CreateConnection();
+               connection = localDbProvider.GetInstance(config.LocalDbInstanceName).CreateConnection();
+            }
+            else
+            {
+               throw new InvalidOperationException(
+                  "IsLocalDbInstance was true in configuration but no instance name or connection string was configured.");
+            }
+
             connection.Open();
          }
          else
          {
-            connection = new SqlConnection(config.ConnectionString);
-            connection.Open();
+            if (!string.IsNullOrWhiteSpace(config.ConnectionString))
+            {
+               connection = new SqlConnection(config.ConnectionString);
+               connection.Open();
+            }
+            else
+            {
+               throw new InvalidOperationException(
+                  "IsLocalDbInstance was false in configuration but no connection string was configured.");
+            }
          }
 
          return connection;
       }
 
+      /// <summary>
+      /// Opens a new connection to a specific database instance on the configured SQLServer instance.
+      /// </summary>
+      /// <param name="databaseName">The name of the database to connect to.</param>
+      /// <returns>A newly opened SqlConnection instance.</returns>
       public SqlConnection CreateConnection(string databaseName)
       {
          SqlConnection connection = CreateConnection();
@@ -101,6 +170,10 @@
          return connection;
       }
 
+      /// <summary>
+      /// Deletes the contents of all custom tables in the target database.
+      /// </summary>
+      /// <param name="databaseName">The name of the database to purge the contents of.</param>
       public void PurgeDatabaseContents(string databaseName)
       {
          using (var connection = CreateConnection(databaseName))
