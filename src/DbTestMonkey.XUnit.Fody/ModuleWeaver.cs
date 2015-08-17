@@ -401,6 +401,10 @@
 
       private TypeDefinition GetDbControllerDefinition(TypeDefinition type)
       {
+         // Diagnostics.
+         LogInfo("Assembly References detected:");
+         type.Module.AssemblyReferences.ToList().ForEach(anr => LogInfo(anr.Name));
+
          TypeDefinition dbController = null;
          var DbTestMonkeyDatabasesAssemblyRef =
             type.Module.AssemblyReferences.FirstOrDefault(ar => ar.Name == "DbTestMonkey");
