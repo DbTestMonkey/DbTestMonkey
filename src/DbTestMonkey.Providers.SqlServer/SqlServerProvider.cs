@@ -50,7 +50,7 @@
             if (!string.IsNullOrWhiteSpace(config.LocalDbInstanceName))
             {
                LogAction("Preparing localdb instance: " + config.LocalDbInstanceName);
-               var localDbProvider = new System.Data.SqlLocalDb.SqlLocalDbProvider();
+               var localDbProvider = new SqlLocalDbProvider();
 
                string localDbInstanceName = config.LocalDbInstanceName;
                

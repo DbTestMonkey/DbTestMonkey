@@ -14,11 +14,13 @@
 		<dependency id="Fody" />
       <dependency id="DbTestMonkey" />
       <dependency id="DbTestMonkey.Contracts" />
+      <dependency id="xunit.abstractions" />
 	</dependencies>
   </metadata>
   <files>
     <file src="tools\Install.ps1" target="tools\install.ps1" />
     <file src="tools\Uninstall.ps1" target="tools\uninstall.ps1" />
     <file src="bin\$configuration$\*.*" target="" />
+    <file src="build\*.*" target="build\" />
   </files>
 </package>

@@ -1,13 +1,17 @@
 ﻿namespace DbTestMonkey.Providers.SqlServer
 {
    using System;
+   using System.Configuration;
    using System.Data;
    using System.Diagnostics;
    using System.IO;
+   using System.Linq;
    using Microsoft.SqlServer.Dac;
 
    public class DacManager
    {
+      private const string ConfigurationSectionName = "sqlServer";
+
       private readonly Func<IDbConnection> _connectionFactory;
 
       private readonly Action<string> _logAction;
@@ -20,7 +24,10 @@
 
       public void DeployDacPac(string databaseName)
       {
-         string dacpacPath = @"..\..\..\DACPACs\" + databaseName + ".dacpac";
+         ProviderConfiguration config =
+            (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
+         
+         string dacpacPath = ((SqlDatabaseConfiguration)config.Databases[databaseName]).DacPacFilePath;
 
          _logAction("Loading Dacpac into memory");
          Stopwatch totalTimer = Stopwatch.StartNew();

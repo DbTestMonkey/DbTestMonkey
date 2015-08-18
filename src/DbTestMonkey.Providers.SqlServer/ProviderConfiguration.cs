@@ -31,5 +31,15 @@
             return (string)this["localDbInstanceName"];
          }
       }
+
+      [ConfigurationProperty("databases")]
+      [ConfigurationCollection(typeof(SqlDatabaseConfiguration), AddItemName = "database")]
+      public new SqlDatabasesConfigurationCollection Databases
+      {
+         get
+         {
+            return (SqlDatabasesConfigurationCollection)this["databases"];
+         }
+      }
    }
 }

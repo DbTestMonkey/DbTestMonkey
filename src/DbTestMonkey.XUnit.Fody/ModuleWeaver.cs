@@ -9,7 +9,6 @@
    using Mono.Cecil.Cil;
    using Mono.Cecil.Rocks;
    using DbTestMonkey;
-   using Xunit;
    using Xunit.Abstractions;
 
    /// <summary>
@@ -150,20 +149,20 @@
                TypeDefinition dbFixture = GetDatabasesFixtureDefinition(type);
 
                var genericClassFixture =
-                  xunitClassFixture.MakeGenericInstanceType(type.Module.Import(dbFixture));
+                  xunitClassFixture.MakeGenericInstanceType(type.Module.ImportReference(dbFixture));
 
-               type.Interfaces.Add(type.Module.Import(genericClassFixture));
+               type.Interfaces.Add(type.Module.ImportReference(genericClassFixture));
             }
 
             if (!ctor.Parameters.Any(p => p.ParameterType.FullName == typeof(DatabaseFixture).FullName))
             {
-               ctor.Parameters.Add(new ParameterDefinition(type.Module.Import(GetDatabasesFixtureDefinition(type))));
+               ctor.Parameters.Add(new ParameterDefinition(type.Module.ImportReference(GetDatabasesFixtureDefinition(type))));
             }
 
             // Ensure the class constructor has a ITestHelperOutput parameter.
             if (!ctor.Parameters.Any(p => p.ParameterType.FullName == typeof(ITestOutputHelper).FullName))
             {
-               ctor.Parameters.Add(new ParameterDefinition(type.Module.Import(GetTestOutputHelperDefinition(type))));
+               ctor.Parameters.Add(new ParameterDefinition(type.Module.ImportReference(GetTestOutputHelperDefinition(type))));
             }
 
             /*
@@ -190,19 +189,19 @@
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Ldvirtftn,
-                  ctor.Module.Import(GetTestOutputHelperDefinition(type).Methods.First(m => m.Name == "WriteLine" && m.Parameters.Count == 1))));
+                  ctor.Module.ImportReference(GetTestOutputHelperDefinition(type).Methods.First(m => m.Name == "WriteLine" && m.Parameters.Count == 1))));
 
             ctor.Body.Instructions.InsertBefore(
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Newobj,
-                  ctor.Module.Import(typeof(Action<string>).GetConstructors().First())));
+                  ctor.Module.ImportReference(typeof(Action<string>).GetConstructors().First())));
 
             ctor.Body.Instructions.InsertBefore(
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Callvirt,
-                  ctor.Module.Import(GetDatabasesFixtureDefinition(type).GetMethods().First(m => m.Name == "set_LogAction"))));
+                  ctor.Module.ImportReference(GetDatabasesFixtureDefinition(type).GetMethods().First(m => m.Name == "set_LogAction"))));
 
             /*
              * dbFixture.ClassType = base.GetType();
@@ -222,13 +221,13 @@
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Call,
-                  ctor.Module.Import(typeof(Type).GetMethod("GetTypeFromHandle"))));
+                  ctor.Module.ImportReference(typeof(Type).GetMethod("GetTypeFromHandle"))));
 
             ctor.Body.Instructions.InsertBefore(
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Callvirt,
-                  ctor.Module.Import(GetDatabasesFixtureDefinition(type).GetMethods().First(m => m.Name == "set_ClassType"))));
+                  ctor.Module.ImportReference(GetDatabasesFixtureDefinition(type).GetMethods().First(m => m.Name == "set_ClassType"))));
 
             /*
              * DbController.BeforeTest(this, MethodBase.GetCurrentMethod());
@@ -242,13 +241,13 @@
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Call,
-                  ctor.Module.Import(typeof(MethodBase).GetMethod("GetCurrentMethod"))));
+                  ctor.Module.ImportReference(typeof(MethodBase).GetMethod("GetCurrentMethod"))));
 
             ctor.Body.Instructions.InsertBefore(
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Call,
-                  ctor.Module.Import(GetDbControllerDefinition(type).GetMethods().First(m => m.Name == "BeforeTest"))));
+                  ctor.Module.ImportReference(GetDbControllerDefinition(type).GetMethods().First(m => m.Name == "BeforeTest"))));
          }
       }
 
@@ -263,7 +262,7 @@
          // implement it.
          if (!type.HasInterface("System.IDisposable"))
          {
-            type.Interfaces.Add(type.Module.Import(typeof(IDisposable)));
+            type.Interfaces.Add(type.Module.ImportReference(typeof(IDisposable)));
 
             // Verify whether the type already has a public Dipose method. If not then add a shell.
             if (!type.HasDisposeMethod())
@@ -327,8 +326,8 @@
          /*
           * DbController.AfterTest(MethodBase.GetCurrentMethod());
           * */
-         disposeMethod.Body.Instructions.InsertBefore(finallyEndInstruction, Instruction.Create(OpCodes.Call, disposeMethod.Module.Import(typeof(MethodBase).GetMethod("GetCurrentMethod"))));
-         disposeMethod.Body.Instructions.InsertBefore(finallyEndInstruction, Instruction.Create(OpCodes.Call, disposeMethod.Module.Import(GetDbControllerDefinition(type).GetMethods().First(m => m.Name == "AfterTest"))));
+         disposeMethod.Body.Instructions.InsertBefore(finallyEndInstruction, Instruction.Create(OpCodes.Call, disposeMethod.Module.ImportReference(typeof(MethodBase).GetMethod("GetCurrentMethod"))));
+         disposeMethod.Body.Instructions.InsertBefore(finallyEndInstruction, Instruction.Create(OpCodes.Call, disposeMethod.Module.ImportReference(GetDbControllerDefinition(type).GetMethods().First(m => m.Name == "AfterTest"))));
          disposeMethod.Body.Instructions.InsertBefore(finallyEndInstruction, Instruction.Create(OpCodes.Endfinally));
 
          disposeMethod.Body.InitLocals = true;
@@ -380,7 +379,7 @@
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
 
-            LogInfo("Attempting to resolve DbTestMonkey reference from {assemblyPath}");
+            LogInfo($"Attempting to resolve DbTestMonkey reference from {assemblyPath}");
 
             if (File.Exists(assemblyPath))
             {
@@ -416,7 +415,7 @@
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
 
-            LogInfo("Attempting to resolve DbTestMonkey reference from {assemblyPath}");
+            LogInfo($"Attempting to resolve DbTestMonkey reference from {assemblyPath}");
 
             if (File.Exists(assemblyPath))
             {

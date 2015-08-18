@@ -1,14 +1,15 @@
-﻿namespace DbTestMonkey.Contracts
+﻿namespace DbTestMonkey.Providers.SqlServer
 {
    using System.Configuration;
+   using DbTestMonkey.Contracts;
 
-   public class DatabasesConfigurationCollection : ConfigurationElementCollection
+   public class SqlDatabasesConfigurationCollection : DatabasesConfigurationCollection
    {
-      public DatabaseConfiguration this[int index]
+      public new SqlDatabaseConfiguration this[int index]
       {
          get
          {
-            return base.BaseGet(index) as DatabaseConfiguration;
+            return base.BaseGet(index) as SqlDatabaseConfiguration;
          }
 
          set
@@ -22,11 +23,11 @@
          }
       }
 
-      public new DatabaseConfiguration this[string responseString]
+      public new SqlDatabaseConfiguration this[string responseString]
       {
          get
          {
-            return (DatabaseConfiguration)BaseGet(responseString);
+            return (SqlDatabaseConfiguration)BaseGet(responseString);
          }
 
          set
@@ -40,14 +41,14 @@
          }
       }
 
-      protected override System.Configuration.ConfigurationElement CreateNewElement()
+      protected override ConfigurationElement CreateNewElement()
       {
-         return new DatabaseConfiguration();
+         return new SqlDatabaseConfiguration();
       }
 
       protected override object GetElementKey(ConfigurationElement element)
       {
-         return ((DatabaseConfiguration)element).DatabaseName;
+         return ((SqlDatabaseConfiguration)element).DatabaseName;
       }
    }
 }
