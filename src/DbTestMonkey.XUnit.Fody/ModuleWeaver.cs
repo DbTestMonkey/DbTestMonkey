@@ -339,7 +339,7 @@
       {
          TypeDefinition dbFixture = null;
          var assemblyRef =
-            type.Module.AssemblyReferences.FirstOrDefault(ar => ar.Name == "Xunit.Abstractions");
+            type.Module.AssemblyReferences.FirstOrDefault(ar => ar.Name == "xunit.abstractions");
 
          if (assemblyRef == null)
          {
