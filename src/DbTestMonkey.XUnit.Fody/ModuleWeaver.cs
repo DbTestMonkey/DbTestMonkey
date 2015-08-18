@@ -366,10 +366,6 @@
 
       private TypeDefinition GetDatabasesFixtureDefinition(TypeDefinition type)
       {
-         // Diagnostics.
-         LogInfo("Assembly References detected:");
-         type.Module.AssemblyReferences.ToList().ForEach(anr => LogInfo(anr.Name));
-
          TypeDefinition dbFixture = null;
          var DbTestMonkeyDatabasesAssemblyRef =
             type.Module.AssemblyReferences.FirstOrDefault(ar => ar.Name == "DbTestMonkey");
@@ -378,8 +374,6 @@
          {
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
-
-            LogInfo($"Attempting to resolve DbTestMonkey reference from {assemblyPath}");
 
             if (File.Exists(assemblyPath))
             {
@@ -402,10 +396,6 @@
 
       private TypeDefinition GetDbControllerDefinition(TypeDefinition type)
       {
-         // Diagnostics.
-         LogInfo("Assembly References detected:");
-         type.Module.AssemblyReferences.ToList().ForEach(anr => LogInfo(anr.Name));
-
          TypeDefinition dbController = null;
          var DbTestMonkeyDatabasesAssemblyRef =
             type.Module.AssemblyReferences.FirstOrDefault(ar => ar.Name == "DbTestMonkey");
@@ -414,8 +404,6 @@
          {
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
-
-            LogInfo($"Attempting to resolve DbTestMonkey reference from {assemblyPath}");
 
             if (File.Exists(assemblyPath))
             {
