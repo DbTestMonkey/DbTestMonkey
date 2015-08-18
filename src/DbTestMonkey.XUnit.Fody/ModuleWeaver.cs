@@ -380,6 +380,8 @@
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
 
+            LogInfo("Attempting to resolve DbTestMonkey reference from {assemblyPath}");
+
             if (File.Exists(assemblyPath))
             {
                dbFixture =
@@ -413,6 +415,8 @@
          {
             var assemblyPath =
                Path.Combine(Path.GetDirectoryName(ModuleDefinition.FullyQualifiedName), "DbTestMonkey.dll");
+
+            LogInfo("Attempting to resolve DbTestMonkey reference from {assemblyPath}");
 
             if (File.Exists(assemblyPath))
             {
