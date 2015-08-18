@@ -106,7 +106,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="XUnit_WeavedStructure_Tests.cs" />
+    <Compile Include="XUnit_WeavedStructureNoConfig_Tests.cs" />
     <Compile Include="XUnit_SqlServerProvider_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

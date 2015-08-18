@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DbTestMonkey;
-
-namespace DbTestMonkey
+﻿namespace DbTestMonkey
 {
+   using System;
+
    public class DatabaseFixture : IDisposable
    {
       private Type _type;

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4E8F5591-F3B9-4F52-A223-DAC9E644046F}"
 EndProject
@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{9488FD
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitAssemblyWithDefaultProvider", "tests\XUnitAssemblyWithDefaultProvider\XUnitAssemblyWithDefaultProvider.csproj", "{A70DF899-BD1F-49E7-A359-37C3A44B14E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitAssemblyNoConfig", "tests\XUnitAssemblyNoConfig\XUnitAssemblyNoConfig.csproj", "{A70DF899-BD1F-49E7-A359-37C3A44B14E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbTestMonkey.TestAssists", "tests\DbTestMonkey.TestAssists\DbTestMonkey.TestAssists.csproj", "{0A633077-5075-43E2-BC5F-DF617E5A88FB}"
 EndProject

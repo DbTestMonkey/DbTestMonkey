@@ -8,7 +8,7 @@
    using Xunit;
    using Xunit.Abstractions;
 
-   public class XUnit_WeavedStructure_Tests
+   public class XUnit_WeavedStructureNoConfig_Tests
    {
       [Fact]
       public void Empty_classes_with_usesdatabasesattribute_should_receive_correct_structure()
@@ -17,11 +17,11 @@
 
          // Act.
          var testHelper =
-            new ModuleWeaverTestHelper<ModuleWeaver>("XUnitAssemblyWithDefaultProvider.dll");
+            new ModuleWeaverTestHelper<ModuleWeaver>("XUnitAssemblyNoConfig.dll");
 
          // Assert.
          testHelper.Errors.Count.Should().Be(0);
-         var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyWithDefaultProvider.EmptyClassWithDefaultProvider");
+         var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyNoConfig.EmptyClassWithDefaultProvider");
          type.HasDisposeMethod().Should().BeTrue();
 
          var ctor = type.Methods.Single(m => m.IsConstructor);
@@ -37,11 +37,11 @@
 
          // Act.
          var testHelper =
-            new ModuleWeaverTestHelper<ModuleWeaver>("XUnitAssemblyWithDefaultProvider.dll");
+            new ModuleWeaverTestHelper<ModuleWeaver>("XUnitAssemblyNoConfig.dll");
 
          // Assert.
          testHelper.Errors.Count.Should().Be(0);
-         var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyWithDefaultProvider.ClassWithConnectionButNoUsesDatabases");
+         var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyNoConfig.ClassWithConnectionButNoUsesDatabases");
          type.HasDisposeMethod().Should().BeTrue();
 
          var ctor = type.Methods.Single(m => m.IsConstructor);

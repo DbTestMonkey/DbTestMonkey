@@ -1,18 +1,12 @@
 ﻿namespace DbTestMonkey.XUnit.Tests
 {
    using System;
-   using System.Collections.Generic;
    using System.Data;
    using System.Data.SqlClient;
-   using System.Reflection;
-   using FluentAssertions;
-   using DbTestMonkey;
    using DbTestMonkey.Contracts;
-   using DbTestMonkey.Providers;
+   using FluentAssertions;
    using Xunit;
-   using Xunit.Abstractions;
 
-   //[UsesDatabases]
    public class XUnit_SqlServerProvider_Tests
    {
       [Connection]

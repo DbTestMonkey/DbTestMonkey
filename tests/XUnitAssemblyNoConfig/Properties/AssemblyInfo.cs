@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("XUnitAssemblyWithDefaultProvider")]
+[assembly: AssemblyTitle("XUnitAssemblyNoConfig")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("TALKINGtech")]
-[assembly: AssemblyProduct("XUnitAssemblyWithDefaultProvider")]
+[assembly: AssemblyProduct("XUnitAssemblyNoConfig")]
 [assembly: AssemblyCopyright("Copyright © TALKINGtech 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

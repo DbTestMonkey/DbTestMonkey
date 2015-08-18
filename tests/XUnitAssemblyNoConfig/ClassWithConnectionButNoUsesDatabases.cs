@@ -1,4 +1,4 @@
-﻿namespace XUnitAssemblyWithDefaultProvider
+﻿namespace XUnitAssemblyNoConfig
 {
    using System.Data;
    using DbTestMonkey.Contracts;
