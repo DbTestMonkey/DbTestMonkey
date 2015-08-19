@@ -18,6 +18,8 @@
 
       void SetupDatabase(string databaseName);
 
+      void PurgeDatabaseContents(string databaseName);
+
       /// <summary>
       /// Factory method that will produce an instace of an IDbConnection ready for use.
       /// </summary>

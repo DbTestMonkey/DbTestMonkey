@@ -115,22 +115,5 @@
             }
          }
       }
-
-      [Fact]
-      public void PostDeployment_scripts_should_be_executed()
-      {
-         // Arrange.
-         using (var connection = FirstConnectionFunc())
-         using (var command = connection.CreateCommand())
-         {
-            command.CommandText = "SELECT TOP 1 Name FROM dbo.TestTable";
-
-            // Act.
-            string postDeployResult = (string)command.ExecuteScalar();
-
-            // Assert.
-            postDeployResult.Should().Be("PostDeployment");
-         }
-      }
    }
 }

@@ -68,46 +68,8 @@
          provider.LogAction = logAction;
          provider.InitialiseDatabaseServer();
 
-         List<string> alreadySetupDatabases = new List<string>();
-
-         if (dbAttributes.Any())
-         {
-            // Set up all the databases defined in the UsesDatabaseAttribute.
-            foreach (var databaseName in dbAttributes.First().Databases)
-            {
-               provider.SetupDatabase(databaseName);
-               alreadySetupDatabases.Add(databaseName);
-            }
-         }
-
-         // Set up all the databases defined in the application configuration file.
-         ProviderConfigurationBase providerConfig =
-            (ProviderConfigurationBase)ConfigurationManager.GetSection("dbTestMonkey/" + provider.ConfigurationSectionName);
-
-         foreach (var databaseName in providerConfig.Databases
-            .Cast<DatabaseConfiguration>()
-            .Select(dc => dc.DatabaseName)
-            .Where(dn => !alreadySetupDatabases.Any(asd => asd == dn)))
-         {
-            provider.SetupDatabase(databaseName);
-            alreadySetupDatabases.Add(databaseName);
-         }
-
-         // Finally set up any remaining connections defined in the class.
-         foreach (var connectionAttribute in targetType
-            .GetProperties()
-            .Where(pi => pi.CustomAttributes.Any(a => a.AttributeType.Name == "ConnectionAttribute"))
-            .Select(pi => pi.GetCustomAttribute(typeof(ConnectionAttribute), true)))
-         {
-            var connAttribute = connectionAttribute as ConnectionAttribute;
-
-            if (connAttribute.TargetDatabaseName != null &&
-               !alreadySetupDatabases.Contains(connAttribute.TargetDatabaseName))
-            {
-               provider.SetupDatabase(connAttribute.TargetDatabaseName);
-               alreadySetupDatabases.Add(connAttribute.TargetDatabaseName);
-            }
-         }
+         // Set up each of the configured databases.
+         ExecuteActionForAllDatabases(targetType, dbAttributes, provider, dbName => provider.SetupDatabase(dbName));
       }
 
       public static void AfterTestGroup(Type targetType, Action<string> logAction)
@@ -155,6 +117,9 @@
          }
 
          var provider = Activator.CreateInstance(providerType) as IDatabaseProvider<IDbConnection>;
+
+         // Clear all the existing data out of the configured databases.
+         ExecuteActionForAllDatabases(sender.GetType(), dbAttributes, provider, dbName => provider.PurgeDatabaseContents(dbName));
 
          if (dbAttributes.Any())
          {
@@ -306,6 +271,54 @@
 
          // Return the post-processed string.
          return char.ToUpper(rawString[0]) + rawString.Substring(1);
+      }
+
+      private static void ExecuteActionForAllDatabases(
+         Type targetType, 
+         IEnumerable<UsesDatabasesAttribute> dbAttributes,
+         IDatabaseProvider<IDbConnection> provider,
+         Action<string> action)
+      {
+         List<string> alreadySetupDatabases = new List<string>();
+
+         if (dbAttributes.Any())
+         {
+            // Set up all the databases defined in the UsesDatabaseAttribute.
+            foreach (var databaseName in dbAttributes.First().Databases)
+            {
+               action(databaseName);
+               alreadySetupDatabases.Add(databaseName);
+            }
+         }
+
+         // Set up all the databases defined in the application configuration file.
+         ProviderConfigurationBase providerConfig =
+            (ProviderConfigurationBase)ConfigurationManager.GetSection("dbTestMonkey/" + provider.ConfigurationSectionName);
+
+         foreach (var databaseName in providerConfig.Databases
+            .Cast<DatabaseConfiguration>()
+            .Select(dc => dc.DatabaseName)
+            .Where(dn => !alreadySetupDatabases.Any(asd => asd == dn)))
+         {
+            action(databaseName);
+            alreadySetupDatabases.Add(databaseName);
+         }
+
+         // Finally set up any remaining connections defined in the class.
+         foreach (var connectionAttribute in targetType
+            .GetProperties()
+            .Where(pi => pi.CustomAttributes.Any(a => a.AttributeType.Name == "ConnectionAttribute"))
+            .Select(pi => pi.GetCustomAttribute(typeof(ConnectionAttribute), true)))
+         {
+            var connAttribute = connectionAttribute as ConnectionAttribute;
+
+            if (connAttribute.TargetDatabaseName != null &&
+               !alreadySetupDatabases.Contains(connAttribute.TargetDatabaseName))
+            {
+               action(connAttribute.TargetDatabaseName);
+               alreadySetupDatabases.Add(connAttribute.TargetDatabaseName);
+            }
+         }
       }
    }
 }
