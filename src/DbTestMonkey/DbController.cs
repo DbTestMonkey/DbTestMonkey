@@ -6,6 +6,7 @@
    using System.Data;
    using System.Linq;
    using System.Reflection;
+   using System.Threading.Tasks;
    using DbTestMonkey.Contracts;
 
    /// <summary>
@@ -279,6 +280,7 @@
          IDatabaseProvider<IDbConnection> provider,
          Action<string> action)
       {
+         List<Action> dbSetupActions = new List<Action>();
          List<string> alreadySetupDatabases = new List<string>();
 
          if (dbAttributes.Any())
@@ -286,7 +288,7 @@
             // Set up all the databases defined in the UsesDatabaseAttribute.
             foreach (var databaseName in dbAttributes.First().Databases)
             {
-               action(databaseName);
+               dbSetupActions.Add(() => action(databaseName));
                alreadySetupDatabases.Add(databaseName);
             }
          }
@@ -300,7 +302,7 @@
             .Select(dc => dc.DatabaseName)
             .Where(dn => !alreadySetupDatabases.Any(asd => asd == dn)))
          {
-            action(databaseName);
+            dbSetupActions.Add(() => action(databaseName));
             alreadySetupDatabases.Add(databaseName);
          }
 
@@ -315,10 +317,22 @@
             if (connAttribute.TargetDatabaseName != null &&
                !alreadySetupDatabases.Contains(connAttribute.TargetDatabaseName))
             {
-               action(connAttribute.TargetDatabaseName);
+               dbSetupActions.Add(() => action(connAttribute.TargetDatabaseName));
                alreadySetupDatabases.Add(connAttribute.TargetDatabaseName);
             }
          }
+
+         GlobalConfiguration globalConfig =
+            (GlobalConfiguration)ConfigurationManager.GetSection("dbTestMonkey/global");
+
+         if (globalConfig.UseParallelInitialisation)
+         {
+            Parallel.Invoke(dbSetupActions.ToArray());
+         }
+         else
+         {
+            dbSetupActions.ForEach(act => act.Invoke());
+         }         
       }
    }
 }

@@ -27,5 +27,14 @@
             return Type.GetType(DefaultDbProvider);
          }
       }
+
+      [ConfigurationProperty("useParallelInitialisation", IsRequired = false, DefaultValue = true)]
+      public bool UseParallelInitialisation
+      {
+         get
+         {
+            return (bool)this["useParallelInitialisation"];
+         }
+      }
    }
 }
