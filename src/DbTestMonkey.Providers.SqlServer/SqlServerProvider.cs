@@ -183,6 +183,7 @@
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; ALTER TABLE ? NOCHECK CONSTRAINT all;""
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; DELETE FROM ?""
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all""
+                     EXEC sp_MSForEachTable ""INSERT INTO ? DEFAULT VALUES;"" 
                      EXEC sp_MSForEachTable ""IF OBJECTPROPERTY(object_id('?'), 'TableHasIdentity') = 1 DBCC CHECKIDENT ('?', RESEED, 0)""";
 
             command.ExecuteNonQuery();
