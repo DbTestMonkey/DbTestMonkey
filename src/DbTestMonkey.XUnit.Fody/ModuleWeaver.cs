@@ -137,7 +137,7 @@
                   }
                   else
                   {
-                     throw new WeavingException("A reference to Xunit.Core was required but was not found. Please add the Nuget package NUnit (v2.0).");
+                     throw new WeavingException("A reference to Xunit.Core was required but was not found. Please add the Nuget package xunit (v2.0).");
                   }
                }
                else
@@ -242,6 +242,32 @@
                Instruction.Create(
                   OpCodes.Call,
                   ctor.Module.ImportReference(typeof(MethodBase).GetMethod("GetCurrentMethod"))));
+
+            // Load the ITestOutputHelper instance onto the stack.
+            ctor.Body.Instructions.InsertBefore(
+               firstInstructionAfterBaseCtorCall,
+               Instruction.Create(
+                  OpCodes.Ldarg_S,
+                  ctor.Parameters.First(p => p.ParameterType.FullName == typeof(ITestOutputHelper).FullName)));
+
+            // Duplicate the instruction on top of the evaluation stack.
+            ctor.Body.Instructions.InsertBefore(
+               firstInstructionAfterBaseCtorCall,
+               Instruction.Create(OpCodes.Dup));
+
+            // Load the virtual function ITestOutputHelper.WriteLine onto the evaluation stack.
+            ctor.Body.Instructions.InsertBefore(
+               firstInstructionAfterBaseCtorCall,
+               Instruction.Create(
+                  OpCodes.Ldvirtftn,
+                  ctor.Module.ImportReference(GetTestOutputHelperDefinition(type).Methods.First(m => m.Name == "WriteLine" && m.Parameters.Count == 1))));
+
+            // Wrap a new action delegate around the ITestOutputHelper.WriteLine delegate call.
+            ctor.Body.Instructions.InsertBefore(
+               firstInstructionAfterBaseCtorCall,
+               Instruction.Create(
+                  OpCodes.Newobj,
+                  ctor.Module.ImportReference(typeof(Action<string>).GetConstructors().First())));
 
             ctor.Body.Instructions.InsertBefore(
                firstInstructionAfterBaseCtorCall,

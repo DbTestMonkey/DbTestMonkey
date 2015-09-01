@@ -82,7 +82,7 @@
       /// </summary>
       /// <param name="sender">The object which called this method.</param>
       /// <param name="methodBase">Contextual information about the method which called this method.</param>
-      public static void BeforeTest(object sender, MethodBase methodBase)
+      public static void BeforeTest(object sender, MethodBase methodBase, Action<string> logAction)
       {
          var dbAttributes = methodBase
             .DeclaringType
@@ -118,9 +118,10 @@
          }
 
          var provider = Activator.CreateInstance(providerType) as IDatabaseProvider<IDbConnection>;
+         provider.LogAction = logAction;
 
-         // Clear all the existing data out of the configured databases.
-         ExecuteActionForAllDatabases(sender.GetType(), dbAttributes, provider, dbName => provider.PurgeDatabaseContents(dbName));
+         // Clear all the existing data out of the configured databases and re-seed base data.
+         ExecuteActionForAllDatabases(sender.GetType(), dbAttributes, provider, dbName => provider.ExecutePreTestTasks(dbName));
 
          if (dbAttributes.Any())
          {
