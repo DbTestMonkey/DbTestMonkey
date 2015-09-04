@@ -176,7 +176,7 @@
       /// Deletes the contents of all custom tables in the target database.
       /// </summary>
       /// <param name="databaseName">The name of the database to purge the contents of.</param>
-      public void PurgeDatabaseContents(string databaseName)
+      public void ExecutePreTestTasks(string databaseName)
       {
          using (var connection = CreateConnection(databaseName))
          using (var command = connection.CreateCommand())
@@ -185,9 +185,38 @@
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; ALTER TABLE ? NOCHECK CONSTRAINT all;""
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; DELETE FROM ?""
                      EXEC sp_MSForEachTable ""SET QUOTED_IDENTIFIER ON; ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all""
-                     EXEC sp_MSForEachTable ""IF OBJECTPROPERTY(object_id('?'), 'TableHasIdentity') = 1 DBCC CHECKIDENT ('?', RESEED, 0)""";
+                     EXEC sp_MSForEachTable N'
+                        IF OBJECTPROPERTY(object_id(''?''), ''TableHasIdentity'') = 1 
+                        BEGIN
+                           IF 
+                           (
+                              SELECT TOP 1 last_value
+                              FROM INFORMATION_SCHEMA.COLUMNS
+                                 INNER JOIN sys.identity_columns
+                                    ON name = COLUMN_NAME
+                              WHERE COLUMNPROPERTY(object_id(N''?''), COLUMN_NAME, ''IsIdentity'') = 1
+                           ) IS NULL
+                           BEGIN
+                              DBCC CHECKIDENT (N''?'', RESEED, 1)
+                           END
+                           ELSE
+                           BEGIN
+                              DBCC CHECKIDENT (N''?'', RESEED, 0)
+                           END
+                        END'";
 
             command.ExecuteNonQuery();
+
+            ProviderConfiguration config =
+               (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
+
+            // If the user has opted to run the post-deployment script before each test then
+            // run it after clearing the data.
+            if (config.Databases[databaseName].ExecutePostDeploymentScriptPerTest)
+            {
+               new DacManager(CreateConnection, LogAction)
+                  .ExecutePostDeploymentScript(databaseName);
+            }
          }
       }
    }

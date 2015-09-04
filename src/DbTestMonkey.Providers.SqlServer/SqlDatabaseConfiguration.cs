@@ -13,5 +13,14 @@
             return (string)this["dacPacFilePath"];
          }
       }
+
+      [ConfigurationProperty("executePostDeploymentScriptPerTest", IsRequired = false, DefaultValue = true)]
+      public bool ExecutePostDeploymentScriptPerTest
+      {
+         get
+         {
+            return (bool)this["executePostDeploymentScriptPerTest"];
+         }
+      }
    }
 }

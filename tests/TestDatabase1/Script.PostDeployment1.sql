@@ -9,4 +9,11 @@ Post-Deployment Script Template
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
 */
-SET CONTEXT_INFO 0x01010101;
+INSERT INTO dbo.TestTable
+(
+   Name
+)
+VALUES
+(
+   N'John'
+)

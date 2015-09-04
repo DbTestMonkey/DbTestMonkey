@@ -5,7 +5,6 @@
    using System.Data;
    using System.Diagnostics;
    using System.IO;
-   using System.Linq;
    using Microsoft.SqlServer.Dac;
 
    public class DacManager
@@ -19,7 +18,7 @@
       public DacManager(Func<IDbConnection> connectionFactory, Action<string> logAction)
       {
          _connectionFactory = connectionFactory;
-         _logAction = logAction;
+         _logAction = logAction ?? new Action<string>(message => { });
       }
 
       public void DeployDacPac(string databaseName)
@@ -91,11 +90,66 @@
                   "Deploying dacpac took " + 
                   dacpacDeployTimer.ElapsedMilliseconds + 
                   " ms");
+
+               // If the user has opted to only run the post-deployment script after the DACPAC
+               // deployment and not per-test, it needs to run once.
+               if (!config.Databases[databaseName].ExecutePostDeploymentScriptPerTest)
+               {
+                  ExecutePostDeploymentScript(databaseName, dacPackage);
+               }
             }
          }
 
          totalTimer.Stop();
          _logAction("Total dacpac time was " + totalTimer.ElapsedMilliseconds + " ms");
+      }
+
+      public void ExecutePostDeploymentScript(string databaseName)
+      {
+         ProviderConfiguration config =
+            (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
+
+         string dacpacPath = ((SqlDatabaseConfiguration)config.Databases[databaseName]).DacPacFilePath;
+
+         _logAction("Loading Dacpac into memory");
+         _logAction("current directory:" + Environment.CurrentDirectory);
+         _logAction("dacpacPath:" + dacpacPath);
+
+         using (DacPackage dacPackage = DacPackage.Load(dacpacPath, DacSchemaModelStorageType.Memory, FileAccess.Read))
+         {
+            ExecutePostDeploymentScript(databaseName, dacPackage);
+         }
+      }
+
+      private void ExecutePostDeploymentScript(string databaseName, DacPackage dacPackage)
+      {
+         databaseName = databaseName ?? dacPackage.Name;
+
+         using (IDbConnection connection = _connectionFactory())
+         {
+            try
+            {
+               connection.ChangeDatabase(databaseName);
+            }
+            catch
+            {
+               _logAction(
+                  "Could not change connection to database " +
+                  databaseName +
+                  " before post-deployment script. Database may not yet exist.");
+            }
+
+            // Execute the DAC post-deployment script.
+            if (dacPackage.PostDeploymentScript != null)
+            {
+               using (IDbCommand command = connection.CreateCommand())
+               {
+                  command.CommandText = new StreamReader(dacPackage.PostDeploymentScript).ReadToEnd();
+                  command.CommandText = command.CommandText.Replace("\nGO", "");
+                  command.ExecuteNonQuery();
+               }
+            }
+         }
       }
 
       private void dacServices_ProgressChanged(object sender, DacProgressEventArgs e)

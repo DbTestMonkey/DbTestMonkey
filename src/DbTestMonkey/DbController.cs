@@ -6,6 +6,7 @@
    using System.Data;
    using System.Linq;
    using System.Reflection;
+   using System.Threading.Tasks;
    using DbTestMonkey.Contracts;
 
    /// <summary>
@@ -81,7 +82,7 @@
       /// </summary>
       /// <param name="sender">The object which called this method.</param>
       /// <param name="methodBase">Contextual information about the method which called this method.</param>
-      public static void BeforeTest(object sender, MethodBase methodBase)
+      public static void BeforeTest(object sender, MethodBase methodBase, Action<string> logAction)
       {
          var dbAttributes = methodBase
             .DeclaringType
@@ -117,9 +118,10 @@
          }
 
          var provider = Activator.CreateInstance(providerType) as IDatabaseProvider<IDbConnection>;
+         provider.LogAction = logAction;
 
-         // Clear all the existing data out of the configured databases.
-         ExecuteActionForAllDatabases(sender.GetType(), dbAttributes, provider, dbName => provider.PurgeDatabaseContents(dbName));
+         // Clear all the existing data out of the configured databases and re-seed base data.
+         ExecuteActionForAllDatabases(sender.GetType(), dbAttributes, provider, dbName => provider.ExecutePreTestTasks(dbName));
 
          if (dbAttributes.Any())
          {
@@ -279,6 +281,7 @@
          IDatabaseProvider<IDbConnection> provider,
          Action<string> action)
       {
+         List<Action> dbSetupActions = new List<Action>();
          List<string> alreadySetupDatabases = new List<string>();
 
          if (dbAttributes.Any())
@@ -286,7 +289,7 @@
             // Set up all the databases defined in the UsesDatabaseAttribute.
             foreach (var databaseName in dbAttributes.First().Databases)
             {
-               action(databaseName);
+               dbSetupActions.Add(() => action(databaseName));
                alreadySetupDatabases.Add(databaseName);
             }
          }
@@ -300,7 +303,7 @@
             .Select(dc => dc.DatabaseName)
             .Where(dn => !alreadySetupDatabases.Any(asd => asd == dn)))
          {
-            action(databaseName);
+            dbSetupActions.Add(() => action(databaseName));
             alreadySetupDatabases.Add(databaseName);
          }
 
@@ -315,10 +318,22 @@
             if (connAttribute.TargetDatabaseName != null &&
                !alreadySetupDatabases.Contains(connAttribute.TargetDatabaseName))
             {
-               action(connAttribute.TargetDatabaseName);
+               dbSetupActions.Add(() => action(connAttribute.TargetDatabaseName));
                alreadySetupDatabases.Add(connAttribute.TargetDatabaseName);
             }
          }
+
+         GlobalConfiguration globalConfig =
+            (GlobalConfiguration)ConfigurationManager.GetSection("dbTestMonkey/global");
+
+         if (globalConfig.UseParallelInitialisation)
+         {
+            Parallel.Invoke(dbSetupActions.ToArray());
+         }
+         else
+         {
+            dbSetupActions.ForEach(act => act.Invoke());
+         }         
       }
    }
 }
