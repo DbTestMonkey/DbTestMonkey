@@ -4,6 +4,7 @@ packages
 # Output Directories
 bin
 obj
+tests/DACPACs/TestDatabase1.dacpac
 
 # Solution Excludes
 *.suo

@@ -86,6 +86,8 @@
          else
          {
             // SQL Server instance must already be set up.
+            LogAction("Configured SQL Server instance is not LocalDB. Assuming user has already created and started the instance.");
+
             return;
          }
       }
