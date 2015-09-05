@@ -12,6 +12,11 @@
     <tags>Unit Testing Database SqlServer Provider Managed</tags>
 	 <dependencies>
       <dependency id="DbTestMonkey.Contracts" />
+      <dependency id="Microsoft.SqlServer.Dac" />
+      <dependency id="System.Data.SqlLocalDb" />
 	 </dependencies>
   </metadata>
+  <files>
+    <file src="tools\Install.ps1" target="tools\install.ps1" />
+  </files>
 </package>

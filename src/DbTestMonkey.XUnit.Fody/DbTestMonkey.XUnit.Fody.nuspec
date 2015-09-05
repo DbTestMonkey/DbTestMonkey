@@ -11,10 +11,10 @@
     <language>en-US</language>
     <tags></tags>
 	<dependencies>
-		<dependency id="Fody" />
+		<dependency id="Fody" version="1.29.3" />
       <dependency id="DbTestMonkey" />
       <dependency id="DbTestMonkey.Contracts" />
-      <dependency id="xunit.abstractions" />
+      <dependency id="xunit" />
 	</dependencies>
   </metadata>
   <files>
@@ -22,5 +22,6 @@
     <file src="tools\Uninstall.ps1" target="tools\uninstall.ps1" />
     <file src="bin\$configuration$\*.*" target="" />
     <file src="build\*.*" target="build\" />
+    <file src="Content\FodyWeavers.xml" target="Content\" />
   </files>
 </package>

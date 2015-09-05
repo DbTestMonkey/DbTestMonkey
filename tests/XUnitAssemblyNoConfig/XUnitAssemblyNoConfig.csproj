@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClassWithExistingConstructorAndClassFixture.cs" />
     <Compile Include="ClassWithConnectionButNoUsesDatabases.cs" />
     <Compile Include="EmptyClassWithDefaultProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

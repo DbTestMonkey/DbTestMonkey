@@ -1,10 +1,11 @@
 # NuGet packages
 packages
 
-# Output Directories
+# Outputs
 bin
 obj
 tests/DACPACs/TestDatabase1.dacpac
+*.nupkg
 
 # Solution Excludes
 *.suo
