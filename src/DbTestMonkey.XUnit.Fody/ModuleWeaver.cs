@@ -464,7 +464,7 @@
             Instruction.Create(
                OpCodes.Callvirt,
                ctor.Module.ImportReference(
-                  GetClassDatabaseFixtureDefinition().GetMethods().First(m => m.Name == "set_LogAction"))));
+                  fixtureDefinitionDelegate().GetMethods().First(m => m.Name == "set_LogAction"))));
 
          /*
           * Below instructions create the following line of code:
@@ -497,7 +497,7 @@
             Instruction.Create(
                OpCodes.Callvirt,
                ctor.Module.ImportReference(
-                  GetClassDatabaseFixtureDefinition().GetMethods().First(m => m.Name == "set_ClassType"))));
+                  fixtureDefinitionDelegate().GetMethods().First(m => m.Name == "set_ClassType"))));
       }
 
       /// <summary>
