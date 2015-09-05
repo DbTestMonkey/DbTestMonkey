@@ -5,12 +5,12 @@
 
    public class SqlDatabaseConfiguration : DatabaseConfiguration
    {
-      [ConfigurationProperty("dacPacFilePath", IsRequired = true)]
+      [ConfigurationProperty("dacpacFilePath", IsRequired = true)]
       public string DacPacFilePath
       {
          get
          {
-            return (string)this["dacPacFilePath"];
+            return (string)this["dacpacFilePath"];
          }
       }
 
@@ -20,6 +20,15 @@
          get
          {
             return (bool)this["executePostDeploymentScriptPerTest"];
+         }
+      }
+
+      [ConfigurationProperty("rapidDeployDacpac", IsRequired = false, DefaultValue = false)]
+      public bool RapidDeployDacpac
+      {
+         get
+         {
+            return (bool)this["rapidDeployDacpac"];
          }
       }
    }

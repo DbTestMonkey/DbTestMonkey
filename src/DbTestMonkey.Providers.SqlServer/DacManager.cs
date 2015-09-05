@@ -1,10 +1,13 @@
 ﻿namespace DbTestMonkey.Providers.SqlServer
 {
    using System;
+   using System.Collections.Generic;
    using System.Configuration;
    using System.Data;
+   using System.Data.SqlClient;
    using System.Diagnostics;
    using System.IO;
+   using System.Linq;
    using Microsoft.SqlServer.Dac;
 
    public class DacManager
@@ -25,8 +28,10 @@
       {
          ProviderConfiguration config =
             (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
-         
-         string dacpacPath = ((SqlDatabaseConfiguration)config.Databases[databaseName]).DacPacFilePath;
+
+         SqlDatabaseConfiguration databaseConfiguration = config.Databases[databaseName];
+
+         string dacpacPath = databaseConfiguration.DacPacFilePath;
 
          _logAction("Loading Dacpac into memory");
          Stopwatch totalTimer = Stopwatch.StartNew();
@@ -55,15 +60,6 @@
                      " before pre-deployment script. Database may not yet exist.");
                }
 
-               Stopwatch dacpacServiceTimer = Stopwatch.StartNew();
-               DacServices dacServices = new DacServices(connection.ConnectionString);
-               dacpacServiceTimer.Stop();
-
-               _logAction("DacServices initialisation took " + dacpacServiceTimer.ElapsedMilliseconds + " ms");
-
-               dacServices.Message += dacServices_Message;
-               dacServices.ProgressChanged += dacServices_ProgressChanged;
-
                // Execute the DAC pre-deployment script.
                if (dacPackage.PreDeploymentScript != null)
                {
@@ -75,14 +71,82 @@
                   }
                }
 
-               DacDeployOptions options = new DacDeployOptions()
-               {
-                  CreateNewDatabase = true
-               };
-
                _logAction("Deploying dacpac");
                Stopwatch dacpacDeployTimer = Stopwatch.StartNew();
-               dacServices.Deploy(dacPackage, databaseName, upgradeExisting: true, options: options);
+
+               string tempDirectoryPath = 
+                  Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(Path.GetRandomFileName()));
+
+               if (databaseConfiguration.RapidDeployDacpac)
+               {
+                  _logAction("Rapid Deploy is enabled. Unpacking DACPAC to " + tempDirectoryPath + ".");
+
+                  dacPackage.Unpack(tempDirectoryPath);
+
+                  try
+                  {
+                     _logAction("DACPAC has been unpacked. Script will now be executed.");
+
+                     // Change back to the master database so we can drop the custom one.
+                     connection.ChangeDatabase("master");
+
+                     using (IDbCommand command = connection.CreateCommand())
+                     {
+                        command.CommandText = @"
+                           USE master;
+                           IF EXISTS(select * from sys.databases where name = '" + databaseName + @"')
+                           BEGIN
+                              DROP DATABASE  " + databaseName + @"
+                           END;";
+
+                        command.ExecuteNonQuery();
+
+                        command.CommandText = @"CREATE DATABASE " + databaseName;
+                        command.ExecuteNonQuery();
+                     }
+
+                     connection.ChangeDatabase(databaseName);
+
+                     using (IDbCommand command = connection.CreateCommand())
+                     {
+                        command.CommandText = File.ReadAllText(Path.Combine(tempDirectoryPath, "model.sql"));
+
+                        IEnumerable<string> setUpScript = 
+                           command.CommandText.Split(new string[] { "\nGO" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                        // Iterate through each block of the script and deploy them one by one.
+                        foreach (string scriptPart in setUpScript)
+                        {
+                           command.CommandText = scriptPart;
+                           command.ExecuteNonQuery();
+                        }
+                     }
+
+                     _logAction("Rapid Deploy has completed.");
+                  }
+                  finally
+                  {
+                     Directory.Delete(tempDirectoryPath, true);
+                  }
+               }
+               else
+               {
+                  DacDeployOptions options = new DacDeployOptions()
+                  {
+                     CreateNewDatabase = true
+                  };
+
+                  Stopwatch dacpacServiceTimer = Stopwatch.StartNew();
+                  DacServices dacServices = new DacServices(connection.ConnectionString);
+                  dacpacServiceTimer.Stop();
+
+                  _logAction("DacServices initialisation took " + dacpacServiceTimer.ElapsedMilliseconds + " ms");
+
+                  dacServices.Message += dacServices_Message;
+                  dacServices.ProgressChanged += dacServices_ProgressChanged;
+
+                  dacServices.Deploy(dacPackage, databaseName, upgradeExisting: true, options: options);
+               }
 
                dacpacDeployTimer.Stop();
 
