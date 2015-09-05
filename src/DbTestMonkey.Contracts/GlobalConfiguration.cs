@@ -15,7 +15,6 @@
       { 
          get
          {
-            // TODO: Make this private or something.
             return (string)this["defaultDbProviderType"];
          }
       }
@@ -34,6 +33,15 @@
          get
          {
             return (bool)this["useParallelInitialisation"];
+         }
+      }
+
+      [ConfigurationProperty("deployDatabasesEachClass", IsRequired = false, DefaultValue = false)]
+      public bool DeployDatabasesEachClass
+      {
+         get
+         {
+            return (bool)this["deployDatabasesEachClass"];
          }
       }
    }

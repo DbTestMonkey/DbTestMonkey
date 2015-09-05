@@ -54,6 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="xunit.abstractions">
@@ -65,6 +66,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CecilExtensions.cs" />
+    <Compile Include="CollectionDatabaseFixture.cs" />
+    <Compile Include="ClassDatabaseFixture.cs" />
     <Compile Include="ModuleWeaver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WeavingException.cs" />
@@ -78,6 +81,10 @@
     <None Include="tools\uninstall.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DbTestMonkey.Contracts\DbTestMonkey.Contracts.csproj">
+      <Project>{5bdf64dd-0274-4ed7-9d72-38fa3f1840ae}</Project>
+      <Name>DbTestMonkey.Contracts</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DbTestMonkey\DbTestMonkey.csproj">
       <Project>{5918f077-1820-4e1e-b61e-1db0110427a6}</Project>
       <Name>DbTestMonkey</Name>

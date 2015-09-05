@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DatabaseFixture.cs" />
     <Compile Include="DbController.cs" />
     <Compile Include="IEnumerableAttributeExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

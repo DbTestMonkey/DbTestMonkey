@@ -66,6 +66,10 @@
       <Project>{5bdf64dd-0274-4ed7-9d72-38fa3f1840ae}</Project>
       <Name>DbTestMonkey.Contracts</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\DbTestMonkey.XUnit.Fody\DbTestMonkey.XUnit.Fody.csproj">
+      <Project>{5104641a-bcc9-4743-b236-a26a03dd8668}</Project>
+      <Name>DbTestMonkey.XUnit.Fody</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\DbTestMonkey\DbTestMonkey.csproj">
       <Project>{5918f077-1820-4e1e-b61e-1db0110427a6}</Project>
       <Name>DbTestMonkey</Name>

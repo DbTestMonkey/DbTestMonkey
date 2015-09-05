@@ -10,6 +10,13 @@
 
    public class XUnit_WeavedStructureNoConfig_Tests
    {
+      private readonly ITestOutputHelper _outputHelper;
+
+      public XUnit_WeavedStructureNoConfig_Tests(ITestOutputHelper outputHelper)
+      {
+         _outputHelper = outputHelper;
+      }
+
       [Fact]
       public void Empty_classes_with_usesdatabasesattribute_should_receive_correct_structure()
       {
@@ -20,14 +27,17 @@
             new ModuleWeaverTestHelper<ModuleWeaver>("XUnitAssemblyNoConfig.dll");
 
          // Assert.
+         testHelper.InfoMessages.ForEach(e => _outputHelper.WriteLine(e));
+         testHelper.Errors.ForEach(e => _outputHelper.WriteLine(e));
          testHelper.Errors.Count.Should().Be(0);
          var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyNoConfig.EmptyClassWithDefaultProvider");
          type.HasDisposeMethod().Should().BeTrue();
 
          var ctor = type.Methods.Single(m => m.IsConstructor);
-         ctor.Parameters.Count.Should().Be(2);
-         ctor.Parameters.First().ParameterType.FullName.Should().Be(typeof(DatabaseFixture).FullName);
-         ctor.Parameters.Last().ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.Count.Should().Be(3);
+         ctor.Parameters.ElementAt(0).ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.ElementAt(1).ParameterType.FullName.Should().Be(typeof(ClassDatabaseFixture).FullName);
+         ctor.Parameters.ElementAt(2).ParameterType.FullName.Should().Be(typeof(CollectionDatabaseFixture).FullName);
       }
 
       [Fact]
@@ -45,9 +55,10 @@
          type.HasDisposeMethod().Should().BeTrue();
 
          var ctor = type.Methods.Single(m => m.IsConstructor);
-         ctor.Parameters.Count.Should().Be(2);
-         ctor.Parameters.First().ParameterType.FullName.Should().Be(typeof(DatabaseFixture).FullName);
-         ctor.Parameters.Last().ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.Count.Should().Be(3);
+         ctor.Parameters.ElementAt(0).ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.ElementAt(1).ParameterType.FullName.Should().Be(typeof(ClassDatabaseFixture).FullName);
+         ctor.Parameters.ElementAt(2).ParameterType.FullName.Should().Be(typeof(CollectionDatabaseFixture).FullName);
       }
 
       [Fact]
@@ -65,14 +76,19 @@
          type.HasDisposeMethod().Should().BeTrue();
 
          var ctor = type.Methods.Single(m => m.IsConstructor);
-         ctor.Parameters.Count.Should().Be(3);
+         ctor.Parameters.Count.Should().Be(4);
          ctor.Parameters.ElementAt(0).ParameterType.FullName.Should().Be("XUnitAssemblyNoConfig.ArbitraryFixtureClass");
-         ctor.Parameters.ElementAt(1).ParameterType.FullName.Should().Be(typeof(DatabaseFixture).FullName);
-         ctor.Parameters.ElementAt(2).ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.ElementAt(1).ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
+         ctor.Parameters.ElementAt(2).ParameterType.FullName.Should().Be(typeof(ClassDatabaseFixture).FullName);
+         ctor.Parameters.ElementAt(3).ParameterType.FullName.Should().Be(typeof(CollectionDatabaseFixture).FullName);
 
+         type.Interfaces.Count().Should().Be(3);
          type.Interfaces.ElementAt(0).FullName.Should().Be("Xunit.IClassFixture`1<XUnitAssemblyNoConfig.ArbitraryFixtureClass>");
          type.Interfaces.ElementAt(1).FullName.Should().Be("System.IDisposable");
-         type.Interfaces.ElementAt(2).FullName.Should().Be("Xunit.IClassFixture`1<DbTestMonkey.DatabaseFixture>");
+         type.Interfaces.ElementAt(2).FullName.Should().Be("Xunit.IClassFixture`1<DbTestMonkey.XUnit.Fody.ClassDatabaseFixture>");
+
+         type.CustomAttributes.Count().Should().Be(1);
+         type.CustomAttributes.ElementAt(0).AttributeType.FullName.Should().Be(typeof(CollectionAttribute).FullName);
       }
    }
 }

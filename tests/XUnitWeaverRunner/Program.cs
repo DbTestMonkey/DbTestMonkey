@@ -1,6 +1,7 @@
 ﻿namespace XUnitWeaverRunner
 {
    using System;
+   using System.Diagnostics;
    using DbTestMonkey.TestAssists;
    using DbTestMonkey.XUnit.Fody;
 
@@ -15,6 +16,20 @@
          var testHelper = new ModuleWeaverTestHelper<ModuleWeaver>(
             "DbTestMonkey.XUnit.Tests.dll",
             modifyOriginalBinaries: true);
+
+         // Keeping this zombie code in for diagnostic purposes in future.
+         // MSBuild task fails if I leave it in.
+
+         /*
+         Console.WriteLine("Weaving informational messages:");
+
+         foreach (var msg in testHelper.InfoMessages)
+         {
+            Console.WriteLine(msg);
+         }
+
+         Console.WriteLine("Weaving error messages:");
+         */
 
          if (testHelper.Errors.Count != 0)
          {
