@@ -92,6 +92,16 @@
 
                      using (IDbCommand command = connection.CreateCommand())
                      {
+                        // Force disconnect all other existing connections to ensure it is not in use.
+                        command.CommandText = @"
+                           USE master;
+                           IF EXISTS(select * from sys.databases where name = '" + databaseName + @"')
+                           BEGIN
+                              ALTER DATABASE " + databaseName + @" SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+                           END;";
+                        
+                        command.ExecuteNonQuery();
+
                         command.CommandText = @"
                            USE master;
                            IF EXISTS(select * from sys.databases where name = '" + databaseName + @"')
