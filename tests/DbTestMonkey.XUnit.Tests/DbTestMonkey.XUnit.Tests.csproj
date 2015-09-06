@@ -107,6 +107,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="DataAccessCollectionDefinition.cs" />
+    <Compile Include="XUnit_SqlServerProviderNoCollection_Tests.cs" />
     <Compile Include="XUnit_WeavedStructureNoConfig_Tests.cs" />
     <Compile Include="XUnit_SqlServerProvider_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

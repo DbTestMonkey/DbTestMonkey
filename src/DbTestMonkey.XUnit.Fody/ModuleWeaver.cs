@@ -70,6 +70,30 @@
 
          try
          {
+            // If the user has not already disabled parallization for the assembly then weave it in.
+            // They can override this simply by explicitly putting the attribute in themselves.
+            if (!ModuleDefinition.Assembly.CustomAttributes.Any(a => 
+               a.AttributeType.FullName == typeof(Xunit.CollectionBehaviorAttribute).FullName))
+            {
+               LogInfo("Assembly level CollectionBehaviorAttribute is about to be added as it wasn't already present.");
+
+               // First we need to get the constructor of the attribute.
+               MethodReference attributeConstructor = ModuleDefinition.ImportReference(
+                  typeof(Xunit.CollectionBehaviorAttribute).GetConstructor(new Type[] { }));
+
+               // Once we have the constructor, the custom attribute can be assembled and added.
+               CustomAttribute collectionBehaviourAttribute = new CustomAttribute(attributeConstructor);
+
+               collectionBehaviourAttribute.Properties.Add(
+                  new Mono.Cecil.CustomAttributeNamedArgument(
+                     "DisableTestParallelization",
+                     new CustomAttributeArgument(ModuleDefinition.ImportReference(typeof(bool)), true)));
+
+               ModuleDefinition.Assembly.CustomAttributes.Add(collectionBehaviourAttribute);
+
+               LogInfo("Assembly level CollectionBehaviorAttribute has been added successfully.");
+            }
+
             IEnumerable<TypeDefinition> types = ModuleDefinition.GetTypes();
             
             // Weave any classes that have a UsesDatabasesAttribute on it or one or more properties have a ConnectionAttribute
@@ -86,6 +110,9 @@
                   "DbTestMonkey.Runtime",
                   "DbTestMonkeyXUnitRuntimeCollectionDefinition",
                   Mono.Cecil.TypeAttributes.Class | Mono.Cecil.TypeAttributes.Public);
+
+               // BaseType defaults to null but it needs to be object.
+               typeDefinition.BaseType = ModuleDefinition.ImportReference(typeof(object));
 
                LogInfo("Class has been created. Preparing to attach CollectionAttribute.");
 
@@ -107,6 +134,7 @@
                TypeDefinition dbFixture = GetCollectionDatabaseFixtureDefinition();
 
                var collectionFixture = GetXunitCollectionFixtureDefinition();
+               ModuleDefinition.ImportReference(collectionFixture);
 
                var genericClassFixture =
                   collectionFixture.MakeGenericInstanceType(ModuleDefinition.ImportReference(dbFixture));
@@ -114,6 +142,9 @@
                typeDefinition.Interfaces.Add(ModuleDefinition.ImportReference(genericClassFixture));
 
                LogInfo("Interface has been added successfully.");
+               ModuleDefinition.Types.Add(typeDefinition);
+
+               LogInfo("Type has been added to the module successfully.");
             }
 
             foreach (var type in matchingTypes)

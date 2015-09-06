@@ -10,13 +10,6 @@
    [Collection("DataAccess")]
    public class XUnit_SqlServerProvider_Tests
    {
-      public XUnit_SqlServerProvider_Tests()
-      {
-         // Required to stop the assembly reference being optimised out.
-         // This is resolved with a targets file when Nuget packages are used.
-         //var arbitraryObject = new DbTestMonkey.XUnit.Fody.ClassDatabaseFixture();
-      }
-
       [Connection]
       public Func<IDbConnection> FirstConnectionFunc { get; set; }
 
