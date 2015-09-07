@@ -8,6 +8,7 @@
    using System.Diagnostics;
    using System.IO;
    using System.Linq;
+   using System.Text.RegularExpressions;
    using Microsoft.SqlServer.Dac;
 
    public class DacManager
@@ -143,6 +144,33 @@
                         {
                            command.CommandText = scriptPart;
                            command.ExecuteNonQuery();
+
+                           Regex regex = new Regex(@"ADD\s+FILEGROUP\s+\[(.*)\]");
+
+                           Match match = regex.Match(scriptPart);
+
+                           if (match != null && match.Success && match.Groups != null && match.Groups.Count >= 2)
+                           {
+                              string fileGroupName = match.Groups[1].Value;
+                              string fileName = databaseName + "_" + fileGroupName + ".ndf";
+
+                              command.CommandText = @"
+                              ALTER DATABASE " + databaseName + @"
+                              ADD FILE
+                              (
+                                 NAME = N'" + fileName + @"',
+                                 FILENAME = N'" + Path.Combine(Path.GetFullPath(config.DatabaseFileStorePath), fileName) + @"'
+                              )
+                              TO FILEGROUP [" + fileGroupName + "];";
+
+                              command.ExecuteNonQuery();
+
+                              _logAction("Filegroup " + fileGroupName + " has been created and a file assocaited with it.");
+                           }
+                           else
+                           {
+                              _logAction("WARNING: A filegroup creation has been actioned but a file was unable to be associated with it.");
+                           }
                         }
 
                         _logAction("Creating any schemas required.");
