@@ -125,6 +125,7 @@
                      using (IDbCommand command = connection.CreateCommand())
                      {
                         command.CommandText = File.ReadAllText(Path.Combine(tempDirectoryPath, "model.sql"));
+                        command.CommandText = command.CommandText.Replace("$(DatabaseName)", databaseName);
 
                         IEnumerable<string> setUpScript = 
                            command.CommandText.Split(new string[] { "\nGO" }, StringSplitOptions.RemoveEmptyEntries).ToList();
