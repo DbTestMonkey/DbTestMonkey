@@ -92,6 +92,8 @@
 
                      using (IDbCommand command = connection.CreateCommand())
                      {
+                        _logAction("Force disconnecting all existing connections to the database.");
+
                         // Force disconnect all other existing connections to ensure it is not in use.
                         command.CommandText = @"
                            USE master;
@@ -102,6 +104,8 @@
                         
                         command.ExecuteNonQuery();
 
+                        _logAction("Dropping the database.");
+
                         command.CommandText = @"
                            USE master;
                            IF EXISTS(select * from sys.databases where name = '" + databaseName + @"')
@@ -110,6 +114,8 @@
                            END;";
 
                         command.ExecuteNonQuery();
+
+                        _logAction("Re-creating the database.");
 
                         command.CommandText = @"CREATE DATABASE " + databaseName;
                         command.ExecuteNonQuery();
@@ -124,8 +130,59 @@
                         IEnumerable<string> setUpScript = 
                            command.CommandText.Split(new string[] { "\nGO" }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
-                        // Iterate through each block of the script and deploy them one by one.
-                        foreach (string scriptPart in setUpScript)
+                        IEnumerable<string> schemaCreationQueries = setUpScript.Where(s => s.Contains("CREATE SCHEMA"));
+                        IEnumerable<string> tableCreationQueries = setUpScript.Where(s => s.Contains("CREATE TABLE"));
+                        IEnumerable<string> loginCreationQueries = setUpScript.Where(s => s.Contains("CREATE LOGIN"));
+                        IEnumerable<string> typeCreationQueries = setUpScript.Where(s => s.Contains("CREATE TYPE"));
+
+                        _logAction("Creating any schemas required.");
+
+                        // Ensure all the schemas are created first.
+                        foreach (string scriptPart in schemaCreationQueries)
+                        {
+                           command.CommandText = scriptPart;
+                           command.ExecuteNonQuery();
+                        }
+
+                        _logAction("Creating any types required.");
+
+                        // Ensure all the types are created next.
+                        foreach (string scriptPart in typeCreationQueries)
+                        {
+                           command.CommandText = scriptPart;
+                           command.ExecuteNonQuery();
+                        }
+
+                        _logAction("Recursively creating any tables required.");
+
+                        // Now create all the tables in a round robin fashion to
+                        // try and resolve foreign key constraints.
+                        RecursiveTryCreateTables(command, tableCreationQueries);
+
+                        _logAction("Creating any logins required.");
+
+                        // Ensure all the logins are created but don't throw if they aren't.
+                        // Logins are stored on a per server basis and not per database.
+                        foreach (string scriptPart in loginCreationQueries)
+                        {
+                           try
+                           {
+                              command.CommandText = scriptPart;
+                              command.ExecuteNonQuery();
+                           }
+                           catch
+                           {
+                              _logAction("Execution failed to create login. Continuing anyway as it probably already exists.");
+                              _logAction("Failed script: " + scriptPart);
+                           }
+                        }
+
+                        // Now deploy the rest of the entities.
+                        foreach (string scriptPart in setUpScript
+                           .Except(schemaCreationQueries)
+                           .Except(typeCreationQueries)
+                           .Except(tableCreationQueries)
+                           .Except(loginCreationQueries))
                         {
                            command.CommandText = scriptPart;
                            command.ExecuteNonQuery();
@@ -176,6 +233,44 @@
 
          totalTimer.Stop();
          _logAction("Total dacpac time was " + totalTimer.ElapsedMilliseconds + " ms");
+      }
+
+      /// <summary>
+      /// Round Robin approach to creating tables. This is pretty hacky but it should serve the purpose.
+      /// Any tables that fail due to FK constraints or otherwise will be re-tried again next round so long
+      /// as at least one table creation suceeded this time. This will ensure an infinite loop until stack
+      /// overflow does not occur.
+      /// </summary>
+      /// <param name="command">The command to use when executing queries.</param>
+      /// <param name="tableCreationQueries">A list of the queries that need to be tried this round.</param>
+      private void RecursiveTryCreateTables(IDbCommand command, IEnumerable<string> tableCreationQueries)
+      {
+         _logAction(
+            "Performing a round of table creation scripts. Tables remaining: " + tableCreationQueries.Count());
+
+         List<string> failedTableCreationQueries = new List<string>();
+
+         bool wasAtLeastOneCreationSuccessful = false;
+
+         foreach (string scriptPart in tableCreationQueries)
+         {
+            try
+            {
+               command.CommandText = scriptPart;
+               command.ExecuteNonQuery();
+
+               wasAtLeastOneCreationSuccessful = true;
+            }
+            catch
+            {
+               failedTableCreationQueries.Add(scriptPart);
+            }
+         }
+
+         if (wasAtLeastOneCreationSuccessful)
+         {
+            RecursiveTryCreateTables(command, failedTableCreationQueries);
+         }
       }
 
       public void ExecutePostDeploymentScript(string databaseName)
