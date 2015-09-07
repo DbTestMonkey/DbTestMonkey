@@ -117,8 +117,7 @@
 
                         _logAction("Re-creating the database.");
 
-                        command.CommandText = @"CREATE DATABASE " + databaseName;
-                        command.ExecuteNonQuery();
+                        EnsureDatabaseExists(command, databaseName, _logAction);
                      }
 
                      connection.ChangeDatabase(databaseName);
@@ -130,14 +129,24 @@
                         IEnumerable<string> setUpScript = 
                            command.CommandText.Split(new string[] { "\nGO" }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
+                        IEnumerable<string> filegroupCreationQueries = setUpScript.Where(s => s.Contains("ADD FILEGROUP"));
                         IEnumerable<string> schemaCreationQueries = setUpScript.Where(s => s.Contains("CREATE SCHEMA"));
                         IEnumerable<string> tableCreationQueries = setUpScript.Where(s => s.Contains("CREATE TABLE"));
                         IEnumerable<string> loginCreationQueries = setUpScript.Where(s => s.Contains("CREATE LOGIN"));
                         IEnumerable<string> typeCreationQueries = setUpScript.Where(s => s.Contains("CREATE TYPE"));
 
+                        _logAction("Creating any filegroups required.");
+
+                        // Ensure all the filegroups are created first.
+                        foreach (string scriptPart in filegroupCreationQueries)
+                        {
+                           command.CommandText = scriptPart;
+                           command.ExecuteNonQuery();
+                        }
+
                         _logAction("Creating any schemas required.");
 
-                        // Ensure all the schemas are created first.
+                        // Ensure all the schemas are created next.
                         foreach (string scriptPart in schemaCreationQueries)
                         {
                            command.CommandText = scriptPart;
@@ -179,6 +188,7 @@
 
                         // Now deploy the rest of the entities.
                         foreach (string scriptPart in setUpScript
+                           .Except(filegroupCreationQueries)
                            .Except(schemaCreationQueries)
                            .Except(typeCreationQueries)
                            .Except(tableCreationQueries)
@@ -319,6 +329,125 @@
                }
             }
          }
+      }
+
+      /// <summary>
+      /// Checks whether the specified database exists in both logical and physical forms.
+      /// </summary>
+      /// <param name="command">A database command to use for polling the instance.</param>
+      /// <param name="databaseName">The name of the database instance to check the existence of.</param>
+      private static void EnsureDatabaseExists(IDbCommand command, string databaseName, Action<string> logAction)
+      {
+         ProviderConfiguration config =
+            (ProviderConfiguration)ConfigurationManager.GetSection("dbTestMonkey/" + ConfigurationSectionName);
+
+         var databaseFileStorePath = config.DatabaseFileStorePath;
+
+         if (string.IsNullOrWhiteSpace(databaseFileStorePath))
+         {
+            throw new InvalidOperationException("DatabaseFileStorePath is required but was not provided.");
+         }
+
+         databaseFileStorePath = Path.GetFullPath(databaseFileStorePath);
+
+         // Logical database is gone, physical file exists. Reattach database.
+         if (!CheckDatabaseExists(command, databaseName) && CheckDatabaseFileExists(databaseName, databaseFileStorePath))
+         {
+            logAction("Logical database is gone, physical file exists. Reattach database.");
+            AttachDatabase(command, databaseName, databaseFileStorePath);
+         }
+         // Logical database is gone, physical file is gone. Create the database.
+         else if (!CheckDatabaseExists(command, databaseName) && !CheckDatabaseFileExists(databaseName, databaseFileStorePath))
+         {
+            logAction("Logical database is gone, physical file is gone. Create the database.");
+            CreateDatabase(command, databaseName, databaseFileStorePath);
+         }
+         // Logical database exists, physical file is gone. Detach and re-create the database.
+         else if (CheckDatabaseExists(command, databaseName) && !CheckDatabaseFileExists(databaseName, databaseFileStorePath))
+         {
+            logAction("Logical database exists, physical file is gone. Detach and re-create the database.");
+            DetachDatabase(command, databaseName);
+            CreateDatabase(command, databaseName, databaseFileStorePath);
+         }
+      }
+
+      /// <summary>
+      /// Creates a new logical database and attaches it to an existing physical database file.
+      /// </summary>
+      /// <param name="command">A database command to use for db operations.</param>
+      /// <param name="databaseName">The name of the database instance to attach to.</param>
+      /// <param name="databaseFileStorePath">The file path representing the folder in which db files should be stored.</param>
+      private static void AttachDatabase(IDbCommand command, string databaseName, string databaseFileStorePath)
+      {
+         command.CommandText =
+            "EXEC sp_attach_db N'" + databaseName + "', '" + Path.Combine(databaseFileStorePath, databaseName + ".mdf") + "';";
+
+         command.ExecuteNonQuery();
+      }
+
+      /// <summary>
+      /// Detaches a logical database from a physical database file.
+      /// </summary>
+      /// <param name="command">A database command to use for polling the database.</param>
+      /// <param name="databaseName">The name of the database to detach.</param>
+      private static void DetachDatabase(IDbCommand command, string databaseName)
+      {
+         command.CommandText =
+            "EXEC sp_detach_db N'" + databaseName + "', 'true';";
+
+         command.ExecuteNonQuery();
+      }
+
+      /// <summary>
+      /// Creates a new physical database file and attaches a new logical database instance to it.
+      /// </summary>
+      /// <param name="command">A database command to use for polling the database.</param>
+      /// <param name="databaseName">The name of the database instance create.</param>
+      /// <param name="databaseFileStorePath">The file path representing the folder in which db files should be stored.</param>
+      private static void CreateDatabase(IDbCommand command, string databaseName, string databaseFileStorePath)
+      {
+         Directory.CreateDirectory(databaseFileStorePath);
+
+         command.CommandText =
+            "CREATE DATABASE " + databaseName + " on (name='" +
+            databaseName + "', filename='" +
+            Path.Combine(databaseFileStorePath, databaseName + ".mdf") + "')";
+
+         command.ExecuteNonQuery();
+      }
+
+      /// <summary>
+      /// Checks whether the specified database exists logically.
+      /// </summary>
+      /// <param name="command">A database command to use for polling the localdb instance.</param>
+      /// <param name="databaseName">The name of the database instance to check the existence of.</param>
+      private static bool CheckDatabaseExists(IDbCommand command, string databaseName)
+      {
+         // First check whether the logical database exists.
+         command.CommandText = @"
+               SELECT CASE WHEN EXISTS
+               (
+                  SELECT 1 FROM master.dbo.sysdatabases
+                  WHERE name = N'" + databaseName + @"'
+               ) 
+               THEN CAST(1 AS bit)
+               ELSE CAST(0 AS bit)
+               END";
+
+         bool databaseExists = (bool)command.ExecuteScalar();
+
+         return databaseExists;
+      }
+
+      /// <summary>
+      /// Checks whether the specified database exists in form.
+      /// </summary>
+      /// <param name="databaseName">The name of the database instance to check the existence of.</param>
+      /// <param name="databaseFileStorePath">The file path representing the folder in which db files should be stored.</param>
+      private static bool CheckDatabaseFileExists(string databaseName, string databaseFileStorePath)
+      {
+         bool fileExists = File.Exists(Path.Combine(databaseFileStorePath, databaseName + ".mdf"));
+         return fileExists;
       }
 
       private void dacServices_ProgressChanged(object sender, DacProgressEventArgs e)

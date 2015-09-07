@@ -6,6 +6,7 @@ bin
 obj
 tests/DACPACs/TestDatabase1.dacpac
 *.nupkg
+tests/DatabaseFileStore
 
 # Solution Excludes
 *.suo

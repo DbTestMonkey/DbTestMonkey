@@ -32,6 +32,15 @@
          }
       }
 
+      [ConfigurationProperty("databaseFileStorePath", IsRequired = true)]
+      public string DatabaseFileStorePath
+      {
+         get
+         {
+            return (string)this["databaseFileStorePath"];
+         }
+      }
+
       [ConfigurationProperty("databases")]
       [ConfigurationCollection(typeof(SqlDatabaseConfiguration), AddItemName = "database")]
       public new SqlDatabasesConfigurationCollection Databases
