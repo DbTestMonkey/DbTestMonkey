@@ -29,7 +29,7 @@
 #if (DEBUG)
          _beforeAssemblyPath = Path.GetFullPath(Path.Combine(inputAssemblyDirectory, "Debug", inputAssembly));
 #else
-         BeforeAssemblyPath = Path.GetFullPath(Path.Combine(inputAssemblyDirectory, "Release", inputAssembly));
+         _beforeAssemblyPath = Path.GetFullPath(Path.Combine(inputAssemblyDirectory, "Release", inputAssembly));
 #endif
          _afterAssemblyPath = _beforeAssemblyPath.Replace(".dll", "2.dll");
          
