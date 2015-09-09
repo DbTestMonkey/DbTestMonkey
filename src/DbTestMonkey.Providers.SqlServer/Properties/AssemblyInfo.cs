@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DbTestMonkey.Providers.SqlServer")]
-[assembly: AssemblyDescription("SqlServer specific provider for the DbTestMonkey databases library.")]
+[assembly: AssemblyDescription("SQL Server specific provider for the DbTestMonkey databases library.")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCompany("Justin Cook")]
 [assembly: AssemblyProduct("DbTestMonkey.Providers.SqlServer")]
-[assembly: AssemblyCopyright("Copyright © 2015")]
+[assembly: AssemblyCopyright("Copyright © Justin Cook 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,5 +33,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.0.0.1")]
+[assembly: AssemblyFileVersion("0.0.0.1")]
