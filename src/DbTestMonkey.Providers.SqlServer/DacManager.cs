@@ -95,15 +95,24 @@
                      {
                         _logAction("Force disconnecting all existing connections to the database.");
 
-                        // Force disconnect all other existing connections to ensure it is not in use.
-                        command.CommandText = @"
+                        try
+                        {
+                           // Force disconnect all other existing connections to ensure it is not in use.
+                           command.CommandText = @"
                            USE master;
                            IF EXISTS(select * from sys.databases where name = '" + databaseName + @"')
                            BEGIN
                               ALTER DATABASE " + databaseName + @" SET SINGLE_USER WITH ROLLBACK IMMEDIATE
                            END;";
-                        
-                        command.ExecuteNonQuery();
+
+                           command.ExecuteNonQuery();
+                        }
+                        catch
+                        {
+                           _logAction(
+                              "An exception was thrown during disconnection of connections. " +
+                              "Physical database file may exist. This is an informational message only.");
+                        }
 
                         _logAction("Dropping the database.");
 
