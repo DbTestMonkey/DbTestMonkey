@@ -142,7 +142,15 @@
 
                         IEnumerable<string> filegroupCreationQueries = setUpScript.Where(s => s.Contains("ADD FILEGROUP"));
                         IEnumerable<string> schemaCreationQueries = setUpScript.Where(s => s.Contains("CREATE SCHEMA"));
-                        IEnumerable<string> tableCreationQueries = setUpScript.Where(s => s.Contains("CREATE TABLE"));
+
+                        // Stricter pattern match required so temp table creation is not picked up.
+                        IEnumerable<string> tableCreationQueries = setUpScript.Where(s =>
+                        {
+                           Regex tableCreationRegex = new Regex(@"CREATE TABLE\s+(?!#).+");
+
+                           return tableCreationRegex.IsMatch(s);
+                        });
+
                         IEnumerable<string> loginCreationQueries = setUpScript.Where(s => s.Contains("CREATE LOGIN"));
                         IEnumerable<string> typeCreationQueries = setUpScript.Where(s => s.Contains("CREATE TYPE"));
 
@@ -318,6 +326,11 @@
          if (wasAtLeastOneCreationSuccessful)
          {
             RecursiveTryCreateTables(command, failedTableCreationQueries);
+         }
+         else if (failedTableCreationQueries.Any())
+         {
+            _logAction("One or more tables failed to create after multiple recursive attempts. Ensure script is correct and try again.");
+            failedTableCreationQueries.ForEach(fq => _logAction("FAILED: " + fq));
          }
       }
 
