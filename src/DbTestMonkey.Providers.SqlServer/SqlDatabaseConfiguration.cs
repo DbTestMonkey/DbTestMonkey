@@ -22,14 +22,5 @@
             return (bool)this["executePostDeploymentScriptPerTest"];
          }
       }
-
-      [ConfigurationProperty("rapidDeployDacpac", IsRequired = false, DefaultValue = false)]
-      public bool RapidDeployDacpac
-      {
-         get
-         {
-            return (bool)this["rapidDeployDacpac"];
-         }
-      }
    }
 }

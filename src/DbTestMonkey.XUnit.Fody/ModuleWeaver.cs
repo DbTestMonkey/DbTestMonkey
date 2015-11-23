@@ -183,13 +183,13 @@
       {
          LogInfo("Beginning to inject database set up into the constructor of type " + type.Name);
 
-         if (type.GetConstructors().Count() > 1)
+         if (type.GetConstructors().Count(m => m.IsInstanceConstructor()) > 1)
          {
             throw new WeavingException(
                "Class " + type.FullName + " has multiple constructors which is not currently supported. Please remove additional constructors.");
          }
 
-         foreach (var ctor in type.GetConstructors())
+         foreach (var ctor in type.GetConstructors().Where(m => m.IsInstanceConstructor()))
          {
             Instruction firstInstruction = ctor.Body.Instructions.FirstOrDefault(i => i.InstructionCallsConstructor());
 

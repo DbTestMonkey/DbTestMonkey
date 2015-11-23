@@ -154,7 +154,7 @@ function PopulateAppConfigWithDummyData($project)
       $attrib = MakeXmlAttribute $xml "connectionPropertyName" "YourDatabaseConnectionPropertyName"
       $databaseNode.Attributes.Append($attrib) > $null
 
-      $attrib = MakeXmlAttribute $xml "dacPacFilePath" "..\..\..\DACPACs\YourDatabaseName.dacpac"
+      $attrib = MakeXmlAttribute $xml "dacpacFilePath" "..\..\..\DACPACs\YourDatabaseName.dacpac"
       $databaseNode.Attributes.Append($attrib) > $null
    }
 

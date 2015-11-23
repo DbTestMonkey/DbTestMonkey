@@ -9,6 +9,11 @@
    {
       private readonly ArbitraryFixtureClass _arbObj;
 
+      static ClassWithExistingConstructorAndClassFixture()
+      {
+         // Oh noes a static constructor!
+      }
+
       public ClassWithExistingConstructorAndClassFixture(ArbitraryFixtureClass arbObj)
       {
          if (arbObj == null)

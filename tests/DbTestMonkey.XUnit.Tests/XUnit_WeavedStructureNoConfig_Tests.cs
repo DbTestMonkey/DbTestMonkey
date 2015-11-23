@@ -75,7 +75,7 @@
          var type = testHelper.ModuleDefinition.GetType("XUnitAssemblyNoConfig.ClassWithExistingConstructorAndClassFixture");
          type.HasDisposeMethod().Should().BeTrue();
 
-         var ctor = type.Methods.Single(m => m.IsConstructor);
+         var ctor = type.Methods.Single(m => m.IsInstanceConstructor());
          ctor.Parameters.Count.Should().Be(4);
          ctor.Parameters.ElementAt(0).ParameterType.FullName.Should().Be("XUnitAssemblyNoConfig.ArbitraryFixtureClass");
          ctor.Parameters.ElementAt(1).ParameterType.FullName.Should().Be(typeof(ITestOutputHelper).FullName);
