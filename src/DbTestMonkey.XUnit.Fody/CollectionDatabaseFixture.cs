@@ -8,7 +8,7 @@
    /// A fixture used by XUnit facts and theories when database are involved and set up
    /// on a per collection basis.
    /// </summary>
-   public class CollectionDatabaseFixture
+   public class CollectionDatabaseFixture : IDisposable
    {
       /// <summary>
       /// The path to use when looking for global DbTestMonkey configuration.
@@ -81,7 +81,12 @@
          // If not each class, then each collection.
          if (!globalConfig.DeployDatabasesEachClass)
          {
-            DbController.AfterTestGroup(_type, LogAction);
+            // Log calls must unfortunately be discarded with xUnit as the following exception occurs:
+            //
+            // [Test Collection Cleanup Failure(DataAccess)]: 
+            // System.InvalidOperationException : 
+            // There is no currently active test case.
+            DbController.AfterTestGroup(_type, msg => { });
          }
       }
    }

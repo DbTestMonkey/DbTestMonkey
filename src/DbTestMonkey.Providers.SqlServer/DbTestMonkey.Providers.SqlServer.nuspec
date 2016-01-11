@@ -9,18 +9,20 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>SqlServer specific provider for DbTestMonkey.</description>
     <releaseNotes>
+      v2.0.0 - Removed rapidDeployDacpac feature and associated databaseFileStorePath config attribute.
+             - Fixed dacpacFilePath attribute incorrect casing in configuration.
       v1.0.0 - First stable release. 
              - SQL Server Db Provider and XUnit Test Provider are supported.
     </releaseNotes>    
     <language>en-US</language>
     <projectUrl>https://github.com/DbTestMonkey/DbTestMonkey</projectUrl>
     <licenseUrl>https://github.com/DbTestMonkey/DbTestMonkey/blob/master/License.txt</licenseUrl>
-    <copyright>Copyright 2015 Justin Cook. All rights reserved.</copyright>
+    <copyright>Copyright 2016 Justin Cook. All rights reserved.</copyright>
     <tags>unit testing database integration sqlserver provider fody managed</tags>
 	 <dependencies>
       <dependency id="DbTestMonkey.Contracts" version="1.0.0" />
       <dependency id="Microsoft.SqlServer.Dac" />
-      <dependency id="System.Data.SqlLocalDb" />
+      <dependency id="System.Data.SqlLocalDb" version="1.14.0" />
 	 </dependencies>
   </metadata>
   <files>

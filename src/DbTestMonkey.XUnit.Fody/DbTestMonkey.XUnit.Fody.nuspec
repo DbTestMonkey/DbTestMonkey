@@ -9,13 +9,18 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Fody add-in for weaving database unit testing code.</description>
     <releaseNotes>
+      v2.0.1 - ClassDatabaseFixture and CollectionDatabaseFixture now correctly implement IDisposable to allow xUnit to call cleanup code (issue# 16).
+             - Install.ps1 now correctly sets reference CopyLocal to true when false rather than false when true (issue# 15).
+             - Install.ps1 now places the configSections config element before other configuration in app.config (issue# 14).
+             - Fixed SqlLocalDb to require v1.14.0 to avoid the incorrect pull down of v1.6.0 (issue# 13).
+      v2.0.0 - Added support for classes with a static constructor and a single instance constructor.
       v1.0.0 - First stable release. 
              - SQL Server Db Provider and XUnit Test Provider are supported.
     </releaseNotes>    
     <language>en-US</language>
     <projectUrl>https://github.com/DbTestMonkey/DbTestMonkey</projectUrl>
     <licenseUrl>https://github.com/DbTestMonkey/DbTestMonkey/blob/master/License.txt</licenseUrl>
-    <copyright>Copyright 2015 Justin Cook. All rights reserved.</copyright>
+    <copyright>Copyright 2016 Justin Cook. All rights reserved.</copyright>
     <tags>unit testing database integration xunit fody managed</tags>
 	<dependencies>
 		<dependency id="Fody" version="1.29.3" />

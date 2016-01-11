@@ -8,7 +8,7 @@
    /// A fixture used by XUnit facts and theories when database are involved and set up
    /// on a per class basis.
    /// </summary>
-   public class ClassDatabaseFixture
+   public class ClassDatabaseFixture : IDisposable
    {
       /// <summary>
       /// The path to use when looking for global DbTestMonkey configuration.

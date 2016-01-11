@@ -15,7 +15,7 @@
     <language>en-US</language>
     <projectUrl>https://github.com/DbTestMonkey/DbTestMonkey</projectUrl>
     <licenseUrl>https://github.com/DbTestMonkey/DbTestMonkey/blob/master/License.txt</licenseUrl>
-    <copyright>Copyright 2015 Justin Cook. All rights reserved.</copyright>
+    <copyright>Copyright 2016 Justin Cook. All rights reserved.</copyright>
     <tags>unit testing database integration managed</tags>
   </metadata>
   <files>

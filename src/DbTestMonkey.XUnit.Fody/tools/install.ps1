@@ -55,9 +55,9 @@ function Fix-ReferencesCopyLocal($package, $project)
    {
       if ($asms -contains $reference.Name + ".dll")
       {
-         if($reference.CopyLocal -eq $true)
+         if($reference.CopyLocal -eq $false)
          {
-            $reference.CopyLocal = $false;
+            $reference.CopyLocal = $true;
          }
       }
    }
@@ -103,7 +103,7 @@ function PopulateAppConfigWithDummyData($project)
 
    if ($configSectionsNode -eq $null)
    {
-      $configSectionsNode = $configurationNode.AppendChild($xml.CreateNode([System.Xml.XmlNodeType]::Element, "configSections", $null))
+      $configSectionsNode = $configurationNode.PrependChild($xml.CreateNode([System.Xml.XmlNodeType]::Element, "configSections", $null))
    }
 
    # Add the sectionGroup node.
