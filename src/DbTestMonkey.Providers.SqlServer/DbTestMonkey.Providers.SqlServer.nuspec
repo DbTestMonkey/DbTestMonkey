@@ -9,6 +9,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>SqlServer specific provider for DbTestMonkey.</description>
     <releaseNotes>
+      v2.0.3 - Explicitly set the Microsoft.SqlServer.Dac dependency version for issue# 13.
+      v2.0.2 - Explicitly set the System.Data.SqlLocalDb dependency version for issue# 13.
       v2.0.0 - Removed rapidDeployDacpac feature and associated databaseFileStorePath config attribute.
              - Fixed dacpacFilePath attribute incorrect casing in configuration.
       v1.0.0 - First stable release. 
@@ -21,7 +23,7 @@
     <tags>unit testing database integration sqlserver provider fody managed</tags>
 	 <dependencies>
       <dependency id="DbTestMonkey.Contracts" version="1.0.0" />
-      <dependency id="Microsoft.SqlServer.Dac" />
+      <dependency id="Microsoft.SqlServer.Dac" version="1.0.1" />
       <dependency id="System.Data.SqlLocalDb" version="1.14.0" />
 	 </dependencies>
   </metadata>
