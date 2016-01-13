@@ -167,8 +167,14 @@
       {
          SqlConnection connection = CreateConnection();
 
-         connection.ChangeDatabase(databaseName);
+         SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
+         builder.InitialCatalog = databaseName;
 
+         connection.Close();
+         connection.ConnectionString = builder.ToString();
+
+         connection.Open();
+         
          return connection;
       }
 

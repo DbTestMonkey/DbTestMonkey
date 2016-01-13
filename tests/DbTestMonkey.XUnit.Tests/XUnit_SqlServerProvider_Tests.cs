@@ -113,6 +113,7 @@
 
                // Assert.
                action.ShouldNotThrow();
+               connection.Database.Should().Be("TestDatabase1");
             }
          }
       }

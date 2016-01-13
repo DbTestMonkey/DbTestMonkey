@@ -9,6 +9,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>SqlServer specific provider for DbTestMonkey.</description>
     <releaseNotes>
+      v2.0.4 - Fixed bug where requesting a connection string from DbTestMonkey via a string property
+             - would always give a string back without the requested InitialCatalog set.
       v2.0.3 - Explicitly set the Microsoft.SqlServer.Dac dependency version for issue# 13.
       v2.0.2 - Explicitly set the System.Data.SqlLocalDb dependency version for issue# 13.
       v2.0.0 - Removed rapidDeployDacpac feature and associated databaseFileStorePath config attribute.
