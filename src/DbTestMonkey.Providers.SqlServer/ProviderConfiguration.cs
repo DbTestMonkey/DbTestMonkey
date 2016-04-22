@@ -32,6 +32,16 @@
          }
       }
 
+      [ConfigurationProperty("allowedLocalDbVersions", IsRequired = false)]
+      [ConfigurationCollection(typeof(LocalDbAllowedVersion), AddItemName = "version")]
+      public SqlLocalDbAllowedVersionsCollection Versions
+      {
+         get
+         {
+            return (SqlLocalDbAllowedVersionsCollection)this["allowedLocalDbVersions"];
+         }
+      }
+
       [ConfigurationProperty("databases")]
       [ConfigurationCollection(typeof(SqlDatabaseConfiguration), AddItemName = "database")]
       public new SqlDatabasesConfigurationCollection Databases
