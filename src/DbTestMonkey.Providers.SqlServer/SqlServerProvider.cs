@@ -8,7 +8,9 @@
    using DbTestMonkey.Contracts;
    using DbTestMonkey.Providers.SqlServer;
    using System.Linq;
-
+   using System.Data;
+   using System.IO;  
+   
    /// <summary>
    /// SqlServer specific database provider for the DbTestMonkey library.
    /// </summary>
@@ -90,6 +92,32 @@
          }
       }
 
+      private static IEnumerable<string> GetPhysicalFilesForServer(SqlLocalDbInstance existingInstance)
+      {
+         if (!existingInstance.IsRunning)
+         {
+            existingInstance.Start();
+         }
+
+         List<string> filePaths = new List<string>();
+
+         using (var connection = existingInstance.CreateConnection())
+         using (var command = connection.CreateCommand())
+         {
+            connection.Open();
+            command.CommandText = "SELECT physical_name AS physicalPath FROM sys.master_files";
+            using (var reader = command.ExecuteReader())
+            {
+               while (reader.Read())
+               {
+                  filePaths.Add(reader["physicalPath"].ToString());
+               }
+            }
+         }
+
+         return filePaths;
+      }
+
       private ISqlLocalDbInstance GetAppropriateLocalDbInstance(
          SqlLocalDbApiWrapper localDbApi,
          string localDbInstanceName, 
@@ -150,31 +178,30 @@ Please correct this error by one of the following options:
          {
             SqlLocalDbInstance existingInstance = localDbProvider.GetInstance(localDbInstanceName);
 
-            ISqlLocalDbInstanceInfo instanceInfo = existingInstance.GetInstanceInfo();
+            IEnumerable<string> filePaths = GetPhysicalFilesForServer(existingInstance);
 
-            if (!instanceInfo.Exists)
+            bool isMissingFiles = filePaths.Any(path => !File.Exists(path));
+
+            // If at least one file doesn't exist, delete them all.
+            // We have found that the SqlLocalDbInstanceInfo.Exists property to not be reliable.
+            if (isMissingFiles)
             {
-               LogAction("Existing LocalDb instance with name " + localDbInstanceName + " was found but there was no associated physical files");
+               LogAction("Existing LocalDb instance with name " + localDbInstanceName + " was found but some physical files were missing");
                LogAction("Deleting instance and will attempt to recreate");
 
-               if (existingInstance.IsRunning)
+               existingInstance.Stop();
+               SqlLocalDbApi.DeleteInstance(existingInstance.Name, deleteFiles: true);
+
+               foreach (string filePath in filePaths)
                {
-                  existingInstance.Stop();
+                  try
+                  {
+                     File.Delete(filePath);
+                  }
+                  catch (DirectoryNotFoundException) { }
                }
 
-               SqlLocalDbInstance.Delete(existingInstance);
-            }
-            else if (!instanceInfo.ConfigurationCorrupt)
-            {
-               LogAction("Existing LocalDb instance with name " + localDbInstanceName + " was found to have corrupt configuration");
-               LogAction("Deleting instance and will attempt to recreate");
-
-               if (existingInstance.IsRunning)
-               {
-                  existingInstance.Stop();
-               }
-
-               SqlLocalDbInstance.Delete(existingInstance);
+               return null;
             }
             else
             {
