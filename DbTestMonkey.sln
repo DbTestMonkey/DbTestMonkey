@@ -44,6 +44,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbTestMonkey.NUnit.Fody", "src\DbTestMonkey.NUnit.Fody\DbTestMonkey.NUnit.Fody.csproj", "{C901325C-6AAF-4E33-B2A7-7F2079AE3F21}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbTestMonkey.NUnit.Tests", "tests\DbTestMonkey.NUnit.Tests\DbTestMonkey.NUnit.Tests.csproj", "{02566FAF-9F59-4D06-B934-D3B12AAA7E7E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{420DEFA5-E65C-4452-B6A9-40C532B1DAF3} = {420DEFA5-E65C-4452-B6A9-40C532B1DAF3}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NUnitWeaverRunner", "tests\NUnitWeaverRunner\NUnitWeaverRunner.csproj", "{420DEFA5-E65C-4452-B6A9-40C532B1DAF3}"
 EndProject

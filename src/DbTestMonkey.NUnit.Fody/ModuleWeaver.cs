@@ -179,6 +179,31 @@
 
          /*
           * Below instructions create the following line of code:
+          *    Environment.CurrentDirectory = TextContext.CurrentContext.TestDirectory;
+          * */
+         methodDefinition.Body.Instructions.InsertBefore(
+            firstInstruction,
+            Instruction.Create(
+               OpCodes.Call,
+               methodDefinition.Module.ImportReference(
+                  GetTestContextDefinition().Methods.First(m => m.Name == "get_CurrentContext"))));
+
+         methodDefinition.Body.Instructions.InsertBefore(
+            firstInstruction,
+            Instruction.Create(
+               OpCodes.Callvirt,
+               methodDefinition.Module.ImportReference(
+                  GetTestContextDefinition().Methods.First(m => m.Name == "get_TestDirectory"))));
+
+         methodDefinition.Body.Instructions.InsertBefore(
+            firstInstruction,
+            Instruction.Create(
+               OpCodes.Call,
+               methodDefinition.Module.ImportReference(
+                  GetEnvironmentDefinition().Methods.First(m => m.Name == "set_CurrentDirectory"))));
+
+         /*
+          * Below instructions create the following line of code:
           *    DbController.BeforeTestGroup(this.GetType(), new Action<string>(TestContext.WriteLine));
           * */
 
@@ -453,6 +478,20 @@
 
          tearDownMethod.Body.InitLocals = true;
          tearDownMethod.Body.OptimizeMacros();
+      }
+
+      /// <summary>
+      /// Scans the System assembly for the <see cref="Environment"/> type and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the <see cref="Environment"/> class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the System assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetEnvironmentDefinition()
+      {
+         return GetTypeDefinition(
+            "mscorlib",
+            "mscorlib.dll",
+            "System.Environment");
       }
 
       /// <summary>
