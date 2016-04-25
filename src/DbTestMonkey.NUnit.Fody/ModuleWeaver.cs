@@ -9,7 +9,6 @@
    using Mono.Cecil;
    using Mono.Cecil.Cil;
    using Mono.Cecil.Rocks;
-   using global::NUnit.Framework;
 
    /// <summary>
    /// Fody class used for defining the weaving procedure for target assemblies.
@@ -81,10 +80,10 @@
             foreach (var type in matchingTypes)
             {
                // Ensure required decorated methods exists.
-               EnsureMethodWithAttributeExistsInType(type, typeof(SetUpAttribute));
-               EnsureMethodWithAttributeExistsInType(type, typeof(TearDownAttribute));
-               EnsureMethodWithAttributeExistsInType(type, typeof(OneTimeSetUpAttribute));
-               EnsureMethodWithAttributeExistsInType(type, typeof(OneTimeTearDownAttribute));
+               EnsureMethodWithAttributeExistsInType(type, GetSetUpAttributeDefinition());
+               EnsureMethodWithAttributeExistsInType(type, GetTearDownAttributeDefinition());
+               EnsureMethodWithAttributeExistsInType(type, GetOneTimeSetUpAttributeDefinition());
+               EnsureMethodWithAttributeExistsInType(type, GetOneTimeTearDownAttributeDefinition());
 
                // Per-class method weaving.
                WeavePerClassSetUp(type);
@@ -113,7 +112,7 @@
       /// </summary>
       /// <param name="hostType">The type to ensure the method exists in.</param>
       /// <param name="attributeType">The type of attribute to check for and create if need be.</param>
-      private void EnsureMethodWithAttributeExistsInType(TypeDefinition hostType, Type attributeType)
+      private void EnsureMethodWithAttributeExistsInType(TypeDefinition hostType, TypeDefinition attributeType)
       {
          if (hostType.Methods.Any(m => m.CustomAttributes.Any(a => a.AttributeType.Name == attributeType.Name)))
          {
@@ -135,32 +134,32 @@
       /// </summary>
       /// <param name="hostType">The type of object to weave the new method into.</param>
       /// <param name="attributeType">The type of attribute to decorate the method with.</param>
-      private void WeaveAttributeDecoratedMethod(TypeDefinition hostType, Type attributeType)
+      private void WeaveAttributeDecoratedMethod(TypeDefinition hostType, TypeDefinition attributeType)
       {
-         var disposeMethodAttribs =
+         var attribs =
             Mono.Cecil.MethodAttributes.Public |
             Mono.Cecil.MethodAttributes.Final |
             Mono.Cecil.MethodAttributes.HideBySig |
             Mono.Cecil.MethodAttributes.NewSlot |
             Mono.Cecil.MethodAttributes.Virtual;
 
-         var setUpMethodDefinition =
-            new MethodDefinition("Db" + Guid.NewGuid().ToString().Replace("-", ""), disposeMethodAttribs, ModuleDefinition.TypeSystem.Void);
+         var methodDefinition =
+            new MethodDefinition("Db" + Guid.NewGuid().ToString().Replace("-", ""), attribs, ModuleDefinition.TypeSystem.Void);
 
          // Empty method shell that only returns void.
-         setUpMethodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Nop));
-         setUpMethodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
+         methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Nop));
+         methodDefinition.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
 
          // First we need to get the constructor of the attribute.
          MethodReference attributeConstructor = ModuleDefinition.ImportReference(
-            attributeType.GetConstructor(new Type[] { }));
+            attributeType.GetConstructors().First(c => c.Parameters.Count == 0));
 
          // Once we have the constructor, the custom attribute can be assembled and added.
-         CustomAttribute setUpAttribute = new CustomAttribute(attributeConstructor);
+         CustomAttribute customAttrib = new CustomAttribute(attributeConstructor);
 
-         setUpMethodDefinition.CustomAttributes.Add(setUpAttribute);
+         methodDefinition.CustomAttributes.Add(customAttrib);
 
-         hostType.Methods.Add(setUpMethodDefinition);
+         hostType.Methods.Add(methodDefinition);
       }
 
       /// <summary>
@@ -495,9 +494,9 @@
       }
 
       /// <summary>
-      /// Scans the NUnit.Framework assembly for the <see cref="TestContext"/> interface and returns the type definition.
+      /// Scans the NUnit.Framework assembly for the TestContext interface and returns the type definition.
       /// </summary>
-      /// <returns>A <see cref="TypeDefinition"/> representing the <see cref="TestContext"/> class.</returns>
+      /// <returns>A <see cref="TypeDefinition"/> representing the TestContext class.</returns>
       /// <exception cref="WeavingException">
       /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
       private TypeDefinition GetTestContextDefinition()
@@ -506,6 +505,62 @@
             "NUnit.Framework",
             "NUnit.Framework.dll",
             "NUnit.Framework.TestContext");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the SetUpAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the SetUpAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetSetUpAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.SetUpAttribute");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the TearDownAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the TearDownAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetTearDownAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.TearDownAttribute");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the OneTimeSetUpAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the OneTimeSetUpAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetOneTimeSetUpAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.OneTimeSetUpAttribute");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the OneTimeTearDownAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the OneTimeTearDownAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetOneTimeTearDownAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.OneTimeTearDownAttribute");
       }
 
       /// <summary>
