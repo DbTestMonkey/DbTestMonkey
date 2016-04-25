@@ -9,7 +9,6 @@
    using Mono.Cecil;
    using Mono.Cecil.Cil;
    using Mono.Cecil.Rocks;
-   using Xunit.Abstractions;
 
    /// <summary>
    /// Fody class used for defining the weaving procedure for target assemblies.
@@ -73,13 +72,13 @@
             // If the user has not already disabled parallization for the assembly then weave it in.
             // They can override this simply by explicitly putting the attribute in themselves.
             if (!ModuleDefinition.Assembly.CustomAttributes.Any(a => 
-               a.AttributeType.FullName == typeof(Xunit.CollectionBehaviorAttribute).FullName))
+               a.AttributeType.FullName == "Xunit.CollectionBehaviorAttribute"))
             {
                LogInfo("Assembly level CollectionBehaviorAttribute is about to be added as it wasn't already present.");
 
                // First we need to get the constructor of the attribute.
                MethodReference attributeConstructor = ModuleDefinition.ImportReference(
-                  typeof(Xunit.CollectionBehaviorAttribute).GetConstructor(new Type[] { }));
+                  GetXunitCollectionBehaviorAttributeDefinition().GetConstructors().First(c => c.Parameters.Count == 0));
 
                // Once we have the constructor, the custom attribute can be assembled and added.
                CustomAttribute collectionBehaviourAttribute = new CustomAttribute(attributeConstructor);
@@ -118,7 +117,7 @@
 
                // First we need to get the constructor of the attribute.
                MethodReference attributeConstructor = ModuleDefinition.ImportReference(
-                  typeof(Xunit.CollectionDefinitionAttribute).GetConstructor(new Type[] { typeof(string) }));
+                  GetXunitCollectionDefinitionAttributeDefinition().GetConstructors().First(c => c.Parameters.Count == 1 && c.Parameters.First().ParameterType.FullName == "System.String"));
 
                // Once we have the constructor, the custom attribute can be assembled and added.
                CustomAttribute collectionAttribute = new CustomAttribute(attributeConstructor);
@@ -201,7 +200,7 @@
             LogInfo("Ensuring that the constructor has an ITestOutputHelper dependency.");
 
             // Ensure the class constructor has a ITestHelperOutput parameter.
-            if (!ctor.Parameters.Any(p => p.ParameterType.FullName == typeof(ITestOutputHelper).FullName))
+            if (!ctor.Parameters.Any(p => p.ParameterType.FullName == "Xunit.Abstractions.ITestOutputHelper"))
             {
                ctor.Parameters.Add(
                   new ParameterDefinition(
@@ -240,7 +239,7 @@
                firstInstructionAfterBaseCtorCall,
                Instruction.Create(
                   OpCodes.Ldarg_S,
-                  ctor.Parameters.First(p => p.ParameterType.FullName == typeof(ITestOutputHelper).FullName)));
+                  ctor.Parameters.First(p => p.ParameterType.FullName == "Xunit.Abstractions.ITestOutputHelper")));
 
             // Duplicate the instruction on top of the evaluation stack.
             ctor.Body.Instructions.InsertBefore(
@@ -354,13 +353,13 @@
       {
          // Ensure class has a collection attribute.
          if (!type.CustomAttributes.Any(a =>
-               a.AttributeType.FullName == typeof(Xunit.CollectionAttribute).FullName))
+               a.AttributeType.FullName == "Xunit.CollectionAttribute"))
          {
             LogInfo("Importing reference to CollectionAttribute class.");
 
             // First we need to get the constructor of the attribute.
             MethodReference attributeConstructor = ModuleDefinition.ImportReference(
-               typeof(Xunit.CollectionAttribute).GetConstructor(new Type[] { typeof(string) }));
+               GetXunitCollectionAttributeDefinition().GetConstructors().First(c => c.Parameters.Count == 1 && c.Parameters.First().ParameterType.FullName == "System.String"));
 
             LogInfo("Assembling CollectionAttribute in preparation for attaching it to the class.");
 
@@ -380,7 +379,7 @@
             // Attribute can only exist once on a class and it can only accept one argument. 
             // This is safe to check like this.
             var collectionName = type.CustomAttributes.First(a =>
-               a.AttributeType.FullName == typeof(Xunit.CollectionAttribute).FullName).ConstructorArguments.First().Value;
+               a.AttributeType.FullName == "Xunit.CollectionAttribute").ConstructorArguments.First().Value;
 
             LogInfo(
                "Type " + type.Name + 
@@ -390,7 +389,7 @@
             
             var types = ModuleDefinition.Types.Where(t => 
                t.CustomAttributes.Any(a => 
-                  a.AttributeType.FullName == typeof(Xunit.CollectionDefinitionAttribute).FullName && 
+                  a.AttributeType.FullName == "Xunit.CollectionDefinitionAttribute" && 
                   a.ConstructorArguments.First().Value.ToString() == collectionName.ToString()));
 
             if (!types.Any())
@@ -404,7 +403,10 @@
                var definitionType = types.First();
 
                // Just make sure the user hasn't somehow added the DbTestMonkey fixture already. Don't double add it.
-               if (!definitionType.Interfaces.Any(i => i.FullName == typeof(Xunit.ICollectionFixture<CollectionDatabaseFixture>).FullName))
+               if (!definitionType.Interfaces.Any(i => 
+                  i.Name == "ICollectionFixture`1" && 
+                  i.GenericParameters.Count == 1 && 
+                  i.GenericParameters.Any(gp => gp.Name == "CollectionDatabaseFixture")))
                {
                   TypeDefinition dbFixture = GetCollectionDatabaseFixtureDefinition();
 
@@ -466,7 +468,7 @@
             firstInstructionAfterBaseCtorCall,
             Instruction.Create(
                OpCodes.Ldarg_S,
-               ctor.Parameters.First(p => p.ParameterType.FullName == typeof(ITestOutputHelper).FullName)));
+               ctor.Parameters.First(p => p.ParameterType.FullName == "Xunit.Abstractions.ITestOutputHelper")));
 
          // Duplicates the ITestOutputHelper instruction on the stack.
          ctor.Body.Instructions.InsertBefore(
@@ -620,9 +622,9 @@
       }
 
       /// <summary>
-      /// Scans the xunit.core assembly for the <see cref="Xunit.IClassFixture{TFixture}"/> interface and returns the type definition.
+      /// Scans the xunit.core assembly for the Xunit.IClassFixture{TFixture} interface and returns the type definition.
       /// </summary>
-      /// <returns>A <see cref="TypeDefinition"/> representing the <see cref="Xunit.IClassFixture{TFixture}"/> class.</returns>
+      /// <returns>A <see cref="TypeDefinition"/> representing the Xunit.IClassFixture{TFixture} class.</returns>
       /// <exception cref="WeavingException">
       /// Thrown if a reference to the xunit.core assembly was unable to be established.</exception>
       private TypeDefinition GetXunitClassFixtureDefinition()
@@ -634,9 +636,9 @@
       }
 
       /// <summary>
-      /// Scans the xunit.core assembly for the <see cref="Xunit.ICollectionFixture{TFixture}"/> interface and returns the type definition.
+      /// Scans the xunit.core assembly for the Xunit.ICollectionFixture{TFixture} interface and returns the type definition.
       /// </summary>   
-      /// <returns>A <see cref="TypeDefinition"/> representing the <see cref="Xunit.ICollectionFixture{TFixture}"/> class.</returns>
+      /// <returns>A <see cref="TypeDefinition"/> representing the Xunit.ICollectionFixture{TFixture} class.</returns>
       /// <exception cref="WeavingException">
       /// Thrown if a reference to the xunit.core assembly was unable to be established.</exception>
       private TypeDefinition GetXunitCollectionFixtureDefinition()
@@ -645,6 +647,48 @@
             "xunit.core",
             "xunit.core.dll",
             "Xunit.ICollectionFixture`1");
+      }
+
+      /// <summary>
+      /// Scans the xunit.core assembly for the CollectionBehaviorAttribute interface and returns the type definition.
+      /// </summary>   
+      /// <returns>A <see cref="TypeDefinition"/> representing the CollectionBehaviorAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if a reference to the xunit.core assembly was unable to be established.</exception>
+      private TypeDefinition GetXunitCollectionBehaviorAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "xunit.core",
+            "xunit.core.dll",
+            "Xunit.CollectionBehaviorAttribute");
+      }
+
+      /// <summary>
+      /// Scans the xunit.core assembly for the CollectionDefinitionAttribute interface and returns the type definition.
+      /// </summary>   
+      /// <returns>A <see cref="TypeDefinition"/> representing the CollectionDefinitionAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if a reference to the xunit.core assembly was unable to be established.</exception>
+      private TypeDefinition GetXunitCollectionDefinitionAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "xunit.core",
+            "xunit.core.dll",
+            "Xunit.CollectionDefinitionAttribute");
+      }
+
+      /// <summary>
+      /// Scans the xunit.core assembly for the CollectionAttribute interface and returns the type definition.
+      /// </summary>   
+      /// <returns>A <see cref="TypeDefinition"/> representing the CollectionAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if a reference to the xunit.core assembly was unable to be established.</exception>
+      private TypeDefinition GetXunitCollectionAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "xunit.core",
+            "xunit.core.dll",
+            "Xunit.CollectionAttribute");
       }
 
       /// <summary>
@@ -674,6 +718,7 @@
             "DbTestMonkey.XUnit.Fody.dll", 
             "DbTestMonkey.XUnit.Fody.CollectionDatabaseFixture");
       }
+
 
       /// <summary>
       /// Scans the DbTestMonkey assembly for the <see cref="DbController"/> static class and returns the type definition.

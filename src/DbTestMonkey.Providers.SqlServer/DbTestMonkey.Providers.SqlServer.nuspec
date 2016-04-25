@@ -9,6 +9,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>SqlServer specific provider for DbTestMonkey.</description>
     <releaseNotes>
+      v2.1.0 - Added ability to define eligible localdb versions in app config to ensure that even with
+               old binaries it would still be possible to spawn up legacy localdb instances for issue# 19.
+             - Reduced brittleness of database deployments by checking whether the physical files had
+               disappeared for a logical instance and then repairing accordingly.
       v2.0.4 - Fixed bug where requesting a connection string from DbTestMonkey via a string property
              - would always give a string back without the requested InitialCatalog set.
       v2.0.3 - Explicitly set the Microsoft.SqlServer.Dac dependency version for issue# 13.
