@@ -82,8 +82,8 @@
                // Ensure required decorated methods exists.
                EnsureMethodWithAttributeExistsInType(type, GetSetUpAttributeDefinition());
                EnsureMethodWithAttributeExistsInType(type, GetTearDownAttributeDefinition());
-               EnsureMethodWithAttributeExistsInType(type, GetOneTimeSetUpAttributeDefinition());
-               EnsureMethodWithAttributeExistsInType(type, GetOneTimeTearDownAttributeDefinition());
+               EnsureMethodWithAttributeExistsInType(type, GetOneTimeSetUpAttributeDefinition(), GetTestFixtureSetUpAttributeDefinition());
+               EnsureMethodWithAttributeExistsInType(type, GetOneTimeTearDownAttributeDefinition(), GetTestFixtureTearDownAttributeDefinition());
 
                // Per-class method weaving.
                WeavePerClassSetUp(type);
@@ -112,11 +112,16 @@
       /// </summary>
       /// <param name="hostType">The type to ensure the method exists in.</param>
       /// <param name="attributeType">The type of attribute to check for and create if need be.</param>
-      private void EnsureMethodWithAttributeExistsInType(TypeDefinition hostType, TypeDefinition attributeType)
+      /// <param name="synonymousAttributeTypes">Additional attribute types to check for which may be synonymous deprecated versions.</param>
+      private void EnsureMethodWithAttributeExistsInType(TypeDefinition hostType, TypeDefinition attributeType, params TypeDefinition[] synonymousAttributeTypes)
       {
          if (hostType.Methods.Any(m => m.CustomAttributes.Any(a => a.AttributeType.Name == attributeType.Name)))
          {
             LogInfo(hostType.Name + " already has a " + attributeType.Name + " decorated method.");
+         }
+         else if (hostType.Methods.Any(m => m.CustomAttributes.Any(a => synonymousAttributeTypes.Any(at => a.AttributeType.Name == at.Name))))
+         {
+            LogInfo(hostType.Name + " already has a " + attributeType.Name + " synonymous attribute decorated method.");
          }
          else
          {
@@ -180,26 +185,81 @@
           * Below instructions create the following line of code:
           *    Environment.CurrentDirectory = TextContext.CurrentContext.TestDirectory;
           * */
+
+         MethodDefinition testDirMethodReference = 
+            GetTestContextDefinition().Methods.FirstOrDefault(m => m.Name == "get_TestDirectory");
+         MethodDefinition reference;
+
+         if (testDirMethodReference == null)
+         {
+            LogInfo("Target project had either the SILVERLIGHT or PORTABLE macro defined. " +
+               "Falling back to setting current directory from AppDomain.CurrentDomain.BaseDirectory.");
+
+            reference = GetAppDomainDefinition().Methods.FirstOrDefault(m => m.Name == "get_CurrentDomain");
+
+            if (reference == null)
+            {
+               LogError("get_CurrentDomain method was not found.");
+            }
+
+            methodDefinition.Body.Instructions.InsertBefore(
+               firstInstruction,
+               Instruction.Create(
+                  OpCodes.Call,
+                  methodDefinition.Module.ImportReference(
+                     reference)));
+
+            reference = GetAppDomainDefinition().Methods.FirstOrDefault(m => m.Name == "get_BaseDirectory");
+
+            if (reference == null)
+            {
+               LogError("get_BaseDirectory method was not found.");
+            }
+
+            methodDefinition.Body.Instructions.InsertBefore(
+               firstInstruction,
+               Instruction.Create(
+                  OpCodes.Callvirt,
+                  methodDefinition.Module.ImportReference(
+                     reference)));
+         }
+         else
+         {
+            reference = GetTestContextDefinition().Methods.FirstOrDefault(m => m.Name == "get_CurrentContext");
+
+            if (reference == null)
+            {
+               LogError("get_CurrentContext method was not found.");
+            }
+
+            methodDefinition.Body.Instructions.InsertBefore(
+               firstInstruction,
+               Instruction.Create(
+                  OpCodes.Call,
+                  methodDefinition.Module.ImportReference(
+                     reference)));
+
+            methodDefinition.Body.Instructions.InsertBefore(
+               firstInstruction,
+               Instruction.Create(
+                  OpCodes.Callvirt,
+                  methodDefinition.Module.ImportReference(
+                     testDirMethodReference)));
+         }
+
+         reference = GetEnvironmentDefinition().Methods.FirstOrDefault(m => m.Name == "set_CurrentDirectory");
+
+         if (reference == null)
+         {
+            LogError("set_CurrentDirectory method was not found.");
+         }
+
          methodDefinition.Body.Instructions.InsertBefore(
             firstInstruction,
             Instruction.Create(
                OpCodes.Call,
                methodDefinition.Module.ImportReference(
-                  GetTestContextDefinition().Methods.First(m => m.Name == "get_CurrentContext"))));
-
-         methodDefinition.Body.Instructions.InsertBefore(
-            firstInstruction,
-            Instruction.Create(
-               OpCodes.Callvirt,
-               methodDefinition.Module.ImportReference(
-                  GetTestContextDefinition().Methods.First(m => m.Name == "get_TestDirectory"))));
-
-         methodDefinition.Body.Instructions.InsertBefore(
-            firstInstruction,
-            Instruction.Create(
-               OpCodes.Call,
-               methodDefinition.Module.ImportReference(
-                  GetEnvironmentDefinition().Methods.First(m => m.Name == "set_CurrentDirectory"))));
+                  reference)));
 
          /*
           * Below instructions create the following line of code:
@@ -494,6 +554,20 @@
       }
 
       /// <summary>
+      /// Scans the System assembly for the <see cref="AppDomain"/> type and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the <see cref="AppDomain"/> class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the System assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetAppDomainDefinition()
+      {
+         return GetTypeDefinition(
+            "mscorlib",
+            "mscorlib.dll",
+            "System.AppDomain");
+      }
+
+      /// <summary>
       /// Scans the NUnit.Framework assembly for the TestContext interface and returns the type definition.
       /// </summary>
       /// <returns>A <see cref="TypeDefinition"/> representing the TestContext class.</returns>
@@ -561,6 +635,34 @@
             "NUnit.Framework",
             "NUnit.Framework.dll",
             "NUnit.Framework.OneTimeTearDownAttribute");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the TestFixtureSetUpAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the TestFixtureSetUpAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetTestFixtureSetUpAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.TestFixtureSetUpAttribute");
+      }
+
+      /// <summary>
+      /// Scans the NUnit.Framework assembly for the TestFixtureTearDownAttribute interface and returns the type definition.
+      /// </summary>
+      /// <returns>A <see cref="TypeDefinition"/> representing the TestFixtureTearDownAttribute class.</returns>
+      /// <exception cref="WeavingException">
+      /// Thrown if no reference to the NUnit.Framework assembly was found and the binary itself could not be found either.</exception>
+      private TypeDefinition GetTestFixtureTearDownAttributeDefinition()
+      {
+         return GetTypeDefinition(
+            "NUnit.Framework",
+            "NUnit.Framework.dll",
+            "NUnit.Framework.TestFixtureTearDownAttribute");
       }
 
       /// <summary>
