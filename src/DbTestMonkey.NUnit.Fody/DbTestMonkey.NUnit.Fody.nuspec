@@ -9,6 +9,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Fody add-in for weaving database unit testing code.</description>
     <releaseNotes>
+      v2.1.1 - Fixed build issues specifically around portable targeted libraries. 
+             - Resolved issues with FodyWeavers.xml overwriting and prompting on install.
       v2.1.0 - First stable release of NUnit adapter. 
     </releaseNotes>    
     <language>en-US</language>
@@ -28,6 +30,6 @@
     <file src="tools\Uninstall.ps1" target="tools\uninstall.ps1" />
     <file src="bin\$configuration$\*.*" target="" />
     <file src="build\*.*" target="build\" />
-    <file src="Content\FodyWeavers.xml" target="Content\" />
+    <file src="Content\DbTestMonkeyDeleteMe.xml" target="Content\" />
   </files>
 </package>

@@ -13,21 +13,25 @@
       /// <summary>
       /// Determines whether a type contains a public instance method with OneTimeSetUpAttribute and returns it if so.
       /// </summary>
+      /// <remarks>Also considers the deprecated TestFixtureSetUpAttribute which is synonymous.</remarks>
       /// <param name="type">The type of object to inspect.</param>
       /// <returns>A reference to the method if one was found. Null otherwise.</returns>
       public static MethodDefinition GetOneTimeSetUpMethod(this TypeDefinition type)
       {
-         return type.Methods.FirstOrDefault(m => m.CustomAttributes.Any(a => a.AttributeType.Name == "OneTimeSetUpAttribute"));
+         return type.Methods.FirstOrDefault(m => m.CustomAttributes.Any(a => 
+            a.AttributeType.Name == "OneTimeSetUpAttribute" || a.AttributeType.Name == "TestFixtureSetUpAttribute"));
       }
 
       /// <summary>
       /// Determines whether a type contains a public instance method with OneTimeTearDownAttribute and returns it if so.
       /// </summary>
+      /// <remarks>Also considers the deprecated TestFixtureTearDownAttribute which is synonymous.</remarks>
       /// <param name="type">The type of object to inspect.</param>
       /// <returns>A reference to the method if one was found. Null otherwise.</returns>
       public static MethodDefinition GetOneTimeTearDownMethod(this TypeDefinition type)
       {
-         return type.Methods.FirstOrDefault(m => m.CustomAttributes.Any(a => a.AttributeType.Name == "OneTimeTearDownAttribute"));
+         return type.Methods.FirstOrDefault(m => m.CustomAttributes.Any(a => 
+            a.AttributeType.Name == "OneTimeTearDownAttribute" || a.AttributeType.Name == "TestFixtureTearDownAttribute"));
       }
 
       /// <summary>

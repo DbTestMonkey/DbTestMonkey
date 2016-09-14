@@ -9,6 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Fody add-in for weaving database unit testing code.</description>
     <releaseNotes>
+      v2.1.1 - Resolved issues with FodyWeavers.xml overwriting and prompting on install.    
       v2.1.0 - Removed hard compile-time dependency on XUnit.
       v2.0.1 - ClassDatabaseFixture and CollectionDatabaseFixture now correctly implement IDisposable to allow xUnit to call cleanup code (issue# 16).
              - Install.ps1 now correctly sets reference CopyLocal to true when false rather than false when true (issue# 15).
@@ -35,6 +36,6 @@
     <file src="tools\Uninstall.ps1" target="tools\uninstall.ps1" />
     <file src="bin\$configuration$\*.*" target="" />
     <file src="build\*.*" target="build\" />
-    <file src="Content\FodyWeavers.xml" target="Content\" />
+    <file src="Content\DbTestMonkeyDeleteMe.xml" target="Content\" />
   </files>
 </package>

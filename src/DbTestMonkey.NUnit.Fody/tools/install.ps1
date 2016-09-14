@@ -1,33 +1,27 @@
 ﻿param($installPath, $toolsPath, $package, $project)
 
-function FlushVariables()
-{
-   Write-Host "Flushing environment variables"
-   $env:FodyLastProjectPath = ""
-   $env:FodyLastWeaverName = ""
-   $env:FodyLastXmlContents = ""
-}
+$tempFodyWeaversFileName = "DbTestMonkeyDeleteMe.xml"
+$finalFodyWeaversFileName = "FodyWeavers.xml"
 
 function Update-FodyConfig($addinName, $project)
 {
    Write-Host "Update-FodyConfig" 
-   $fodyWeaversPath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($project.FullName), "FodyWeavers.xml")
+   $tempFodyWeaversPath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($project.FullName), $tempFodyWeaversFileName)
+   $fodyWeaversPath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($project.FullName), $finalFodyWeaversFileName)
 
-   $FodyLastProjectPath = $env:FodyLastProjectPath
-   $FodyLastWeaverName = $env:FodyLastWeaverName
-   $FodyLastXmlContents = $env:FodyLastXmlContents
-   
-   if (
-      ($FodyLastProjectPath -eq $project.FullName) -and 
-      ($FodyLastWeaverName -eq $addinName))
+   if (-not [System.IO.File]::Exists($fodyWeaversPath))
    {
-      Write-Host "Upgrade detected. Restoring content for $addinName"
-      [System.IO.File]::WriteAllText($fodyWeaversPath, $FodyLastXmlContents)
-      FlushVariables
-      return
+      Write-Host "FodyWeavers.xml does not yet exist in the project. Ensuring it is now created."
+      $project.ProjectItems.Item($tempFodyWeaversFileName).Name = $finalFodyWeaversFileName
+      [System.IO.File]::Move($tempFodyWeaversPath, $fodyWeaversPath)
    }
-   
-   FlushVariables
+   else
+   {
+      Write-Host "FodyWeavers.xml already exists in the project. Now deleting our temporary version."
+      [System.IO.File]::Delete($tempFodyWeaversPath)
+   }
+
+   $project.ProjectItems.Item($tempFodyWeaversFileName).Delete()
 
    $xml = [xml](get-content $fodyWeaversPath)
 
@@ -66,7 +60,7 @@ function Fix-ReferencesCopyLocal($package, $project)
 function UnlockWeaversXml($project)
 {
    Write-Host "Unlocking WeaversXml"
-   $fodyWeaversProjectItem = $project.ProjectItems.Item("FodyWeavers.xml");
+   $fodyWeaversProjectItem = $project.ProjectItems.Item($finalFodyWeaversFileName);
    if ($fodyWeaversProjectItem)
    {
       $fodyWeaversProjectItem.Open("{7651A701-06E5-11D1-8EBD-00A0C90F26EA}")
@@ -86,7 +80,16 @@ function PopulateAppConfigWithDummyData($project)
    if ($config -eq $null)
    {
       $appConfigPath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($project.FullName), "App.config")
+
+      $declaration = $xml.CreateXmlDeclaration("1.0",$null, $null)
+      $declaration.Encoding = "UTF-8"
+      $xml.AppendChild($declaration)
+
+      $rootNode = $xml.CreateElement("configuration")
+      $xml.AppendChild($rootNode)
       $xml.Save($appConfigPath)
+
+      $project.ProjectItems.AddFromFile($appConfigPath)
    }
 
    $config = $project.ProjectItems | where {$_.Name -eq "App.config"}
