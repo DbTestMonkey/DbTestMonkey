@@ -27,11 +27,12 @@
     <licenseUrl>https://github.com/DbTestMonkey/DbTestMonkey/blob/master/License.txt</licenseUrl>
     <copyright>Copyright 2016 Justin Cook. All rights reserved.</copyright>
     <tags>unit testing database integration sqlserver provider fody managed</tags>
-	 <dependencies>
+    <dependencies>
       <dependency id="DbTestMonkey.Contracts" version="1.0.0" />
-      <dependency id="Microsoft.SqlServer.Dac" version="1.0.1" />
-      <dependency id="System.Data.SqlLocalDb" version="1.14.0" />
-	 </dependencies>
+      <dependency id="Microsoft.SqlServer.Dac" version="1.0.3" />
+      <dependency id="Microsoft.SqlServer.TransactSql.ScriptDom" version="14.0.3660.1" />
+      <dependency id="System.Data.SqlLocalDb" version="1.15.0" />
+    </dependencies>
   </metadata>
   <files>
     <file src="tools\Install.ps1" target="tools\install.ps1" />

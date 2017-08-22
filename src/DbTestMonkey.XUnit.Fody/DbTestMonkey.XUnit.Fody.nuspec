@@ -24,12 +24,12 @@
     <licenseUrl>https://github.com/DbTestMonkey/DbTestMonkey/blob/master/License.txt</licenseUrl>
     <copyright>Copyright 2016 Justin Cook. All rights reserved.</copyright>
     <tags>unit testing database integration xunit fody managed</tags>
-	<dependencies>
-		<dependency id="Fody" version="1.29.3" />
+    <dependencies>
+      <dependency id="Fody" version="1.29.3" />
       <dependency id="DbTestMonkey" version="1.0.0" />
       <dependency id="DbTestMonkey.Contracts" version="1.0.0" />
       <dependency id="xunit" />
-	</dependencies>
+    </dependencies>
   </metadata>
   <files>
     <file src="tools\Install.ps1" target="tools\install.ps1" />

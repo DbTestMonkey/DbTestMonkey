@@ -21,7 +21,7 @@
       void ExecutePreTestTasks(string databaseName);
 
       /// <summary>
-      /// Factory method that will produce an instace of an IDbConnection ready for use.
+      /// Factory method that will produce an instance of an IDbConnection ready for use.
       /// </summary>
       /// <returns>An open IDbConnection ready for use.</returns>
       T CreateConnection(string databaseName);

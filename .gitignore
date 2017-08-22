@@ -11,3 +11,4 @@ tests/DatabaseFileStore
 # Solution Excludes
 *.suo
 *.dbmdl
+.vs
