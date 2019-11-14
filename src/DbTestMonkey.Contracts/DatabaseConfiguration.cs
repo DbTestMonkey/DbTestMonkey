@@ -21,5 +21,15 @@
             return (string)this["connectionPropertyName"];
          }
       }
+
+      [ConfigurationProperty("SqlCommandVariables", IsRequired = false)]
+      [ConfigurationCollection(typeof(SqlCmdVariableConfiguration), AddItemName = "SqlCommandVariable")]
+      public SqlCmdVariablesConfigurationCollection SqlCommandVariables
+      {
+	      get
+	      {
+		      return (SqlCmdVariablesConfigurationCollection)this["SqlCommandVariables"];
+	      }
+      }
    }
 }
