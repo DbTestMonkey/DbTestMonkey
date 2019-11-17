@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4E8F5591-F3B9-4F52-A223-DAC9E644046F}"
 EndProject
@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbTestMonkey.NUnit.Tests", 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NUnitWeaverRunner", "tests\NUnitWeaverRunner\NUnitWeaverRunner.csproj", "{420DEFA5-E65C-4452-B6A9-40C532B1DAF3}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "TestDatabase2", "tests\TestDatabase2\TestDatabase2.sqlproj", "{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +108,12 @@ Global
 		{420DEFA5-E65C-4452-B6A9-40C532B1DAF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{420DEFA5-E65C-4452-B6A9-40C532B1DAF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{420DEFA5-E65C-4452-B6A9-40C532B1DAF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,5 +131,9 @@ Global
 		{C901325C-6AAF-4E33-B2A7-7F2079AE3F21} = {4E8F5591-F3B9-4F52-A223-DAC9E644046F}
 		{02566FAF-9F59-4D06-B934-D3B12AAA7E7E} = {588F367A-528C-4CAB-B40D-F8649A8C14D3}
 		{420DEFA5-E65C-4452-B6A9-40C532B1DAF3} = {588F367A-528C-4CAB-B40D-F8649A8C14D3}
+		{3A61A5FE-DCCB-46E1-9BB4-A77F87F28207} = {588F367A-528C-4CAB-B40D-F8649A8C14D3}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B5A37E77-623D-4022-B374-199411070CB1}
 	EndGlobalSection
 EndGlobal

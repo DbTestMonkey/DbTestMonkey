@@ -123,5 +123,26 @@
             }
          }
       }
+
+      [Test]
+      public void Cross_database_reference_should_not_throw_exception()
+      {
+         using (var connection = new SqlConnection(TestDb1ConnectionString))
+         using (var command = new SqlCommand("TestProcedure1", connection)
+         {
+            CommandType = CommandType.StoredProcedure
+         })
+         {
+            connection.Open();
+
+            // Act.
+            Action action = () =>
+               command.ExecuteNonQuery();
+
+            // Assert.
+            action.ShouldNotThrow();
+            connection.Database.Should().Be("TestDatabase1");
+         }
+      }
    }
 }

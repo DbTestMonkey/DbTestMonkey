@@ -9,6 +9,7 @@
    using System.IO;
    using System.Linq;
    using System.Text.RegularExpressions;
+   using DbTestMonkey.Contracts;
    using Microsoft.SqlServer.Dac;
 
    public class DacManager
@@ -79,6 +80,13 @@
                {
                   CreateNewDatabase = true
                };
+
+               SqlCmdVariablesConfigurationCollection sqlCommandVariables = databaseConfiguration.SqlCommandVariables;
+               foreach (SqlCmdVariableConfiguration sqlCmd in sqlCommandVariables)
+               {
+                  options.SqlCommandVariableValues.Add(sqlCmd.Name, sqlCmd.Value);
+                  _logAction($"Added SQL command variable {sqlCmd.Name} to DacDeployOptions");
+               }
 
                Stopwatch dacpacServiceTimer = Stopwatch.StartNew();
                DacServices dacServices = new DacServices(connection.ConnectionString);
